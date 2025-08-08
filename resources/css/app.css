@@ -1,0 +1,13 @@
+/* Import arahan dasar Tailwind CSS */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Menambahkan style global untuk seluruh halaman.
+  Properti 'zoom' akan membuat seluruh konten halaman
+  ditampilkan pada skala 90%.
+*/
+body {
+    font-family: 'Inter', sans-serif; /* Contoh mengganti font default */
+    zoom: 90%;
+}

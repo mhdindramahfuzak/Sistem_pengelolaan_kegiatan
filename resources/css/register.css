@@ -1,0 +1,46 @@
+/* Menggunakan @apply untuk mengambil utility dari Tailwind */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+    /* Container utama halaman dengan transisi gradien halus */
+    .register-container {
+        @apply min-h-screen bg-[#F2F1E9] flex flex-col items-center justify-center p-4 font-sans transition-colors duration-500;
+    }
+
+    /* Tombol kembali (panah) dengan efek hover yang lebih baik */
+    .back-button {
+        @apply flex items-center justify-center w-12 h-12 rounded-full border border-gray-300 text-gray-700 hover:bg-white hover:border-[#25335C] hover:text-[#25335C] hover:shadow-lg transform hover:scale-110 transition-all duration-300;
+    }
+
+    /* Judul Halaman - Dibuat lebih tebal */
+    .register-title {
+        @apply text-2xl font-extrabold text-[#25335C] mb-10;
+    }
+
+    /* Label untuk setiap input */
+    .form-label {
+        @apply text-xs font-semibold text-gray-500 mb-2 block transition-all duration-300;
+    }
+
+    /* Input field dengan transisi dan bayangan saat aktif */
+    .form-input {
+        @apply w-full px-4 py-3 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#25335C]/50 placeholder:text-sm transition-shadow duration-300 focus:shadow-md;
+    }
+
+    /* Tombol Submit Utama dengan efek hover yang lebih menonjol */
+    .submit-button {
+        @apply w-full bg-[#25335C] hover:bg-[#1e2a4a] text-white font-semibold py-3 rounded-md transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#25335C] disabled:opacity-70 mt-4 transform hover:-translate-y-1 hover:shadow-xl;
+    }
+
+    /* Pesan error di bawah input */
+    .error-message {
+        @apply mt-1 text-xs text-red-600;
+    }
+
+    /* Teks copyright di footer */
+    .copyright-text {
+        @apply text-xs text-gray-500;
+    }
+}
