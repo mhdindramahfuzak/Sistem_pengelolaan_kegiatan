@@ -34,9 +34,11 @@ class HandleInertiaRequests extends Middleware
     {
         return array_merge(parent::share($request), [
             'auth' => [
-                'user' => $request->user(),
-                // Perbaikan: Ganti nama 'permissions' menjadi 'can' agar konsisten dengan frontend
-                // dan kirim $request->user() sebagai argumen, bukan $request
+                // --- PERBAIKAN UTAMA ---
+                // Tambahkan ->load('roles') untuk memastikan data peran selalu ada.
+                'user' => $request->user() ? $request->user()->load('roles') : null,
+                
+                // Kode 'can' Anda sudah benar dan bisa dipertahankan.
                 'can' => $request->user() ? $this->getUserPermissions($request->user()) : null,
             ],
             // Menambahkan kembali flash messages agar notifikasi berfungsi
@@ -53,7 +55,7 @@ class HandleInertiaRequests extends Middleware
      */
     protected function getUserPermissions(User $user): array
     {
-        // Parameter diubah menjadi User $user untuk type-hinting yang benar
+        // Fungsi ini sudah benar dan bisa dipertahankan.
         return [
             'create_proposal' => $user->can('create', Proposal::class),
             'verify_proposal' => $user->can('update', Proposal::class),

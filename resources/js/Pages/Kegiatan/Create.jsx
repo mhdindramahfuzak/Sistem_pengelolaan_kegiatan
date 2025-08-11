@@ -6,6 +6,7 @@ import InputError from '@/Components/InputError';
 import TextAreaInput from '@/Components/TextAreaInput';
 import SelectInput from '@/Components/SelectInput';
 import PrimaryButton from '@/Components/PrimaryButton';
+import { useState } from 'react';
 
 export default function Create({ auth, proposals, tims }) {
     const { data, setData, post, errors, processing } = useForm({
@@ -17,9 +18,18 @@ export default function Create({ auth, proposals, tims }) {
         sktl_path: null,
     });
 
+    const [fileName, setFileName] = useState('');
+
     const onSubmit = (e) => {
         e.preventDefault();
         post(route('kegiatan.store'));
+    };
+
+    const handleFileChange = (file) => {
+        if (file) {
+            setData('sktl_path', file);
+            setFileName(file.name);
+        }
     };
 
     // PERBAIKAN: Buat variabel untuk array yang akan di-map
@@ -28,7 +38,6 @@ export default function Create({ auth, proposals, tims }) {
 
     return (
         <AuthenticatedLayout
-            user={auth.user}
             header={<h2 className="font-semibold text-xl text-gray-800 leading-tight">Buat Kegiatan Baru</h2>}
         >
             <Head title="Buat Kegiatan" />
@@ -114,22 +123,42 @@ export default function Create({ auth, proposals, tims }) {
                                     <InputError message={errors.tim_id} className="mt-2" />
                                 </div>
 
+                                {/* Area Upload File SKTL yang Diperbaiki */}
                                 <div className="mt-4">
                                     <InputLabel htmlFor="sktl_path" value="Unggah SKTL (Surat Keputusan Tugas Lapangan)" />
-                                    <TextInput
-                                        id="sktl_path"
-                                        type="file"
-                                        name="sktl_path"
-                                        className="mt-1 block w-full"
-                                        onChange={(e) => setData('sktl_path', e.target.files[0])}
-                                    />
+                                    <div className="mt-1 relative">
+                                        <label className="cursor-pointer block">
+                                            <div className="flex items-center justify-between w-full px-4 py-3 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors">
+                                                <span className={`${fileName ? 'text-gray-900' : 'text-gray-500'}`}>
+                                                    {fileName || 'Unggah file SKTL'}
+                                                </span>
+                                                <div className="flex items-center justify-center w-6 h-6 bg-gray-100 rounded-full">
+                                                    <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                            <input
+                                                type="file"
+                                                className="hidden"
+                                                accept=".pdf,.doc,.docx"
+                                                onChange={(e) => handleFileChange(e.target.files[0])}
+                                            />
+                                        </label>
+                                    </div>
                                     <InputError message={errors.sktl_path} className="mt-2" />
                                 </div>
 
-                                <div className="mt-4 text-right">
-                                    <PrimaryButton disabled={processing}>
-                                        Buat Kegiatan
-                                    </PrimaryButton>
+                                {/* Tombol yang Diperbaiki - Panjang */}
+                                <div className="mt-6">
+                                    <button
+                                        type="submit"
+                                        disabled={processing}
+                                        className="w-full px-8 py-3 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        style={{ backgroundColor: '#25335C' }}
+                                    >
+                                        {processing ? 'Membuat Kegiatan...' : 'Buat Kegiatan'}
+                                    </button>
                                 </div>
                             </form>
                         </div>

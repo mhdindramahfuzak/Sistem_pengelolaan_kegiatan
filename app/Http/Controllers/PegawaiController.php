@@ -15,21 +15,30 @@ use App\Http\Requests\StoreKontrakRequest;
 
 class PegawaiController extends Controller
 {
+    // ==================== MAIN VIEWS & NAVIGATION ====================
+
     /**
      * Menampilkan halaman "Kegiatan Saya" untuk pegawai.
+     * Filter berdasarkan tahapan kegiatan yang dipilih.
+     *
+     * @param Request $request
+     * @return \Inertia\Response
      */
     public function myIndex(Request $request)
     {
         $user = Auth::user();
-        $query = Kegiatan::with(['tim.users', 'proposal', 'beritaAcara']) // <-- PERBAIKAN
+        
+        $query = Kegiatan::with(['tim.users', 'proposal', 'beritaAcara'])
             ->whereHas('tim.users', function ($q) use ($user) {
                 $q->where('user_id', $user->id);
             });
 
+        // Filter berdasarkan tahapan
         $tahapan = $request->query('tahapan');
         if ($tahapan && $tahapan !== 'semua') {
             $query->where('tahapan', $tahapan);
         } else {
+            // Default: tampilkan semua kecuali yang sudah selesai
             $query->where('tahapan', '!=', 'selesai');
         }
         
@@ -42,210 +51,165 @@ class PegawaiController extends Controller
         ]);
     }
 
+    // ==================== TAHAP 1: PERJALANAN DINAS ====================
+
     /**
-     * Menangani konfirmasi kehadiran pegawai.
+     * Konfirmasi kehadiran pegawai - Memulai tahap dokumentasi observasi.
+     * TAHAP: PERJALANAN_DINAS → DOKUMENTASI_OBSERVASI
+     *
+     * @param Request $request
+     * @param Kegiatan $kegiatan
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function konfirmasiKehadiran(Request $request, Kegiatan $kegiatan)
     {
-        $kegiatan->tahapan = TahapanKegiatan::DOKUMENTASI_OBSERVASI;
-        $kegiatan->save();
+        $kegiatan->update([
+            'tahapan' => TahapanKegiatan::DOKUMENTASI_OBSERVASI
+        ]);
 
-        return to_route('pegawai.kegiatan.myIndex')->with('success', 'Kehadiran berhasil dikonfirmasi dan kegiatan dimulai.');
+        return to_route('pegawai.kegiatan.myIndex')
+            ->with('success', 'Kehadiran berhasil dikonfirmasi. Silakan mulai dokumentasi observasi.');
     }
 
+    // ==================== TAHAP 2: DOKUMENTASI OBSERVASI ====================
+
     /**
-     * Menyimpan dokumentasi observasi.
-     * PERBAIKAN: Hanya menyimpan dokumentasi, tidak mengubah tahapan kegiatan.
+     * Menyimpan dokumentasi observasi lapangan.
+     * CATATAN: Tahapan tidak berubah otomatis, perlu konfirmasi manual.
+     *
+     * @param StoreDokumentasiWithFilesRequest $request
+     * @param Kegiatan $kegiatan
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function storeObservasi(StoreDokumentasiWithFilesRequest $request, Kegiatan $kegiatan)
     {
         $validated = $request->validated();
 
-        $dokumentasiData = [
+        // Buat dokumentasi observasi
+        $dokumentasi = $kegiatan->dokumentasi()->create([
             'nama_dokumentasi' => $validated['nama_dokumentasi'],
             'deskripsi' => $validated['deskripsi'],
             'tipe' => 'observasi',
-        ];
+        ]);
 
-        $dokumentasi = $kegiatan->dokumentasi()->create($dokumentasiData);
+        // Simpan foto-foto dokumentasi
+        $this->saveDokumentasiFotos($request, $dokumentasi);
 
-        // Simpan foto jika ada
-        if ($request->hasFile('fotos')) {
-            foreach ($request->file('fotos') as $file) {
-                $path = $file->store('dokumentasi/fotos', 'public');
-                // PERBAIKAN: Menggunakan nama kolom yang benar 'file_path'
-                $dokumentasi->fotos()->create(['file_path' => $path]);
-            }
-        }
-
-        // ✅ PERBAIKAN: HAPUS/COMMENT BAGIAN INI - Jangan ubah tahapan di sini
-        // Setelah dokumentasi observasi disimpan, ubah tahapan ke 'menunggu proses kabid'
-        // $kegiatan->update([
-        //     'tahapan' => TahapanKegiatan::MENUNGGU_PROSES_KABID,
-        // ]);
-
-        return redirect()->back()->with('success', 'Dokumentasi observasi berhasil disimpan.');
+        return redirect()->back()
+            ->with('success', 'Dokumentasi observasi berhasil disimpan.');
     }
 
     /**
-     * TAMBAHAN: Method baru untuk melanjutkan ke tahap berikutnya secara manual
+     * Menyimpan data kebutuhan dari hasil observasi.
+     *
+     * @param Request $request
+     * @param Kegiatan $kegiatan
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function storeKebutuhan(Request $request, Kegiatan $kegiatan)
+    {
+        $validated = $this->validateKebutuhanData($request);
+
+        // Cek apakah dokumentasi observasi sudah ada
+        $dokumentasiObservasi = $kegiatan->dokumentasi()
+            ->where('tipe', 'observasi')
+            ->first();
+
+        if (!$dokumentasiObservasi) {
+            return redirect()->back()
+                ->withErrors(['kebutuhan_error' => 'Harap isi dokumentasi observasi terlebih dahulu.']);
+        }
+
+        // Hitung total dan simpan kebutuhan
+        $validated['total'] = $validated['jumlah'] * $validated['harga_satuan'];
+        $validated['kegiatan_id'] = $kegiatan->id;
+
+        $dokumentasiObservasi->kebutuhans()->create($validated);
+
+        return redirect()->back()
+            ->with('success', 'Data kebutuhan berhasil disimpan.');
+    }
+
+    /**
+     * Melanjutkan ke tahap berikutnya setelah dokumentasi observasi selesai.
+     * TAHAP: DOKUMENTASI_OBSERVASI → MENUNGGU_PROSES_KABID
+     *
+     * @param Request $request
+     * @param Kegiatan $kegiatan
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function lanjutTahapBerikutnya(Request $request, Kegiatan $kegiatan)
     {
-        // Cek apakah dokumentasi observasi sudah ada
-        $dokumentasiObservasi = $kegiatan->dokumentasi()->where('tipe', 'observasi')->first();
+        // Validasi dokumentasi observasi sudah ada
+        $dokumentasiObservasi = $kegiatan->dokumentasi()
+            ->where('tipe', 'observasi')
+            ->first();
         
         if (!$dokumentasiObservasi) {
-            return redirect()->back()->withErrors(['error' => 'Harap lengkapi dokumentasi observasi terlebih dahulu.']);
+            return redirect()->back()
+                ->withErrors(['error' => 'Harap lengkapi dokumentasi observasi terlebih dahulu.']);
         }
 
-        // Update tahapan ke tahap berikutnya
+        // Update ke tahap menunggu proses Kabid
         $kegiatan->update([
-            'tahapan' => TahapanKegiatan::MENUNGGU_PROSES_KABID,
+            'tahapan' => TahapanKegiatan::MENUNGGU_PROSES_KABID
         ]);
 
-        return redirect()->back()->with('success', 'Kegiatan berhasil dilanjutkan ke tahap berikutnya.');
+        return redirect()->back()
+            ->with('success', 'Dokumentasi observasi selesai. Menunggu proses dari Kabid.');
     }
 
+    // ==================== TAHAP 3: MENUNGGU PROSES KABID ====================
+    // (Tahap ini dikelola oleh Kabid - pegawai menunggu)
+
+    // ==================== TAHAP 4: DOKUMENTASI PENYERAHAN ====================
+
     /**
-     * Menyimpan dokumentasi penyerahan.
+     * Menyimpan dokumentasi penyerahan bantuan.
+     * TAHAP: DOKUMENTASI_PENYERAHAN → PENYELESAIAN
+     *
+     * @param Request $request
+     * @param Kegiatan $kegiatan
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function storePenyerahan(Request $request, Kegiatan $kegiatan)
     {
-        // Pastikan validasinya sesuai dengan form baru
-        $validated = $request->validate([
-            'judul' => 'required|string|max:255',
-            'fotos' => 'required|array', // Validasi bahwa 'fotos' adalah array
-            'fotos.*' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048' // Validasi setiap item di dalam array
-        ]);
+        $validated = $this->validatePenyerahanData($request);
 
-        // Buat dokumentasi kegiatan
+        // Buat dokumentasi penyerahan
         $dokumentasi = $kegiatan->dokumentasi()->create([
             'nama_dokumentasi' => $validated['judul'],
-            'tipe' => 'penyerahan', // Tandai sebagai dokumentasi penyerahan
+            'tipe' => 'penyerahan',
         ]);
 
-        // Simpan setiap foto yang diunggah
-        if ($request->hasFile('fotos')) {
-            foreach ($request->file('fotos') as $file) {
-                $path = $file->store('dokumentasi_foto', 'public');
-                // Sesuaikan nama kolom dengan yang ada di tabel 'fotos'
-                $dokumentasi->fotos()->create(['file_path' => $path]); // BENAR
-            }
-        }
+        // Simpan foto-foto dokumentasi penyerahan
+        $this->savePenyerahanFotos($request, $dokumentasi);
 
-        // Setelah dokumentasi disimpan, lanjutkan tahapan kegiatan
+        // Lanjut ke tahap penyelesaian
         $kegiatan->update([
-            'tahapan' => TahapanKegiatan::PENYELESAIAN, // atau tahapan selanjutnya
+            'tahapan' => TahapanKegiatan::PENYELESAIAN
         ]);
 
-        return redirect()->back()->with('success', 'Dokumentasi penyerahan berhasil disimpan.');
+        return redirect()->back()
+            ->with('success', 'Dokumentasi penyerahan berhasil disimpan.');
     }
 
     /**
-     * Menyelesaikan kegiatan dan menyimpan berita acara.
+     * Upload dokumen kontrak pihak ketiga.
+     *
+     * @param StoreKontrakRequest $request
+     * @param Kegiatan $kegiatan
+     * @return \Illuminate\Http\RedirectResponse
      */
-    public function storeBeritaAcara(Request $request, Kegiatan $kegiatan)
-    {
-        $validated = $request->validate([
-            'file_berita_acara' => 'required|file|mimes:pdf,doc,docx|max:2048',
-        ]);
-
-        // Hapus berita acara lama jika ada
-        if ($kegiatan->beritaAcara) {
-            Storage::disk('public')->delete($kegiatan->beritaAcara->file_path);
-            $kegiatan->beritaAcara->delete();
-        }
-
-        $filePath = $request->file('file_berita_acara')->store('berita_acara', 'public');
-
-        $kegiatan->beritaAcara()->create([
-            'nama_berita_acara' => 'Berita Acara - ' . $kegiatan->nama_kegiatan,
-            'file_path' => $filePath,
-        ]);
-
-        return redirect()->back()->with('success', 'Berita Acara berhasil diunggah.');
-    }
-
-    public function updateStatusAkhir(Request $request, Kegiatan $kegiatan)
-    {
-        if (!$kegiatan->beritaAcara) {
-            return redirect()->back()->withErrors(['status_akhir' => 'Harap unggah Berita Acara terlebih dahulu.']);
-        }
-
-        $validated = $request->validate([
-            'status_akhir' => ['required', Rule::in(['selesai', 'ditunda', 'dibatalkan'])],
-        ]);
-
-        // PERBAIKAN: Pastikan status_akhir disimpan
-        $kegiatan->update([
-            'status_akhir' => $validated['status_akhir'],
-            'tahapan' => TahapanKegiatan::SELESAI,
-        ]);
-
-        return redirect()->route('pegawai.kegiatan.myIndex', ['tahapan' => 'selesai'])
-            ->with('success', 'Status kegiatan telah diselesaikan.');
-    }
-
-    public function uploadPihakKetiga(Request $request, Kegiatan $kegiatan)
-    {
-        $validated = $request->validate([
-            'file_pihak_ketiga' => 'required|file|mimes:pdf',
-        ]);
-
-        // Hapus file lama jika ada
-        if ($kegiatan->file_pihak_ketiga_path && Storage::disk('public')->exists($kegiatan->file_pihak_ketiga_path)) {
-            Storage::disk('public')->delete($kegiatan->file_pihak_ketiga_path);
-        }
-
-        // Simpan file baru dan dapatkan path-nya
-        $filePath = $request->file('file_pihak_ketiga')->store('dokumen_pihak_ketiga', 'public');
-
-        // Update path di database
-        $kegiatan->update([
-            'file_pihak_ketiga_path' => $filePath,
-        ]);
-
-        return redirect()->back()->with('success', 'File pihak ketiga berhasil diunggah.');
-    }
-
-    public function storeKebutuhan(Request $request, Kegiatan $kegiatan)
-    {
-        $validated = $request->validate([
-            'nama_kebutuhan' => 'required|string|max:255',
-            'jumlah' => 'required|numeric|min:1',
-            'satuan' => 'required|string|max:50',
-            'harga_satuan' => 'required|numeric|min:0',
-        ]);
-
-        // Cari dokumentasi observasi yang terkait dengan kegiatan ini.
-        // Asumsi: dokumentasi observasi sudah dibuat saat pegawai mengisi catatan.
-        $dokumentasiObservasi = $kegiatan->dokumentasi()->where('tipe', 'observasi')->first();
-
-        // Jika dokumentasi observasi belum ada, maka buat terlebih dahulu.
-        if (!$dokumentasiObservasi) {
-             return redirect()->back()->withErrors(['kebutuhan_error' => 'Harap isi dokumentasi observasi utama terlebih dahulu sebelum menambah kebutuhan.']);
-        }
-        
-        // Tambahkan total estimasi ke data yang akan disimpan
-        $validated['total'] = $validated['jumlah'] * $validated['harga_satuan'];
-        
-        $validated['kegiatan_id'] = $kegiatan->id;
-
-        // Simpan kebutuhan ke dokumentasi tersebut
-        $dokumentasiObservasi->kebutuhans()->create($validated);
-
-        return redirect()->back()->with('success', 'Data kebutuhan berhasil disimpan.');
-    }
-
     public function storeKontrak(StoreKontrakRequest $request, Kegiatan $kegiatan)
     {
         $validated = $request->validated();
 
         // Upload file kontrak
-        $path = $request->file('dokumen_kontrak')->store('kontrak_pihak_ketiga', 'public');
+        $path = $request->file('dokumen_kontrak')
+            ->store('kontrak_pihak_ketiga', 'public');
 
-        // Simpan data kontrak ke database
+        // Simpan data kontrak
         $kegiatan->kontrak()->create([
             'nama_kontrak' => $validated['nama_pihak_ketiga'],
             'nomor_kontrak' => $validated['nomor_kontrak'],
@@ -254,6 +218,179 @@ class PegawaiController extends Controller
             'file_path' => $path,
         ]);
 
-        return redirect()->back()->with('success', 'Dokumen Kontrak berhasil disimpan.');
+        return redirect()->back()
+            ->with('success', 'Dokumen kontrak berhasil disimpan.');
+    }
+
+    /**
+     * Upload dokumen tambahan dari pihak ketiga.
+     *
+     * @param Request $request
+     * @param Kegiatan $kegiatan
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function uploadPihakKetiga(Request $request, Kegiatan $kegiatan)
+    {
+        $validated = $request->validate([
+            'file_pihak_ketiga' => 'required|file',
+        ]);
+
+        // Hapus file lama jika ada
+        $this->deleteOldFile($kegiatan->file_pihak_ketiga_path);
+
+        // Upload file baru
+        $filePath = $request->file('file_pihak_ketiga')
+            ->store('dokumen_pihak_ketiga', 'public');
+
+        $kegiatan->update([
+            'file_pihak_ketiga_path' => $filePath
+        ]);
+
+        return redirect()->back()
+            ->with('success', 'File pihak ketiga berhasil diunggah.');
+    }
+
+    // ==================== TAHAP 5: PENYELESAIAN ====================
+
+    /**
+     * Menyimpan berita acara kegiatan.
+     *
+     * @param Request $request
+     * @param Kegiatan $kegiatan
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function storeBeritaAcara(Request $request, Kegiatan $kegiatan)
+    {
+        $validated = $request->validate([
+            'file_berita_acara' => 'required|file',
+        ]);
+
+        // Hapus berita acara lama jika ada
+        if ($kegiatan->beritaAcara) {
+            Storage::disk('public')->delete($kegiatan->beritaAcara->file_path);
+            $kegiatan->beritaAcara->delete();
+        }
+
+        // Upload dan simpan berita acara baru
+        $filePath = $request->file('file_berita_acara')
+            ->store('berita_acara', 'public');
+
+        $kegiatan->beritaAcara()->create([
+            'nama_berita_acara' => 'Berita Acara - ' . $kegiatan->nama_kegiatan,
+            'file_path' => $filePath,
+        ]);
+
+        return redirect()->back()
+            ->with('success', 'Berita Acara berhasil diunggah.');
+    }
+
+    /**
+     * Menyelesaikan kegiatan dengan status akhir.
+     * TAHAP: PENYELESAIAN → SELESAI
+     *
+     * @param Request $request
+     * @param Kegiatan $kegiatan
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function updateStatusAkhir(Request $request, Kegiatan $kegiatan)
+    {
+        // Validasi berita acara sudah diunggah
+        if (!$kegiatan->beritaAcara) {
+            return redirect()->back()
+                ->withErrors(['status_akhir' => 'Harap unggah Berita Acara terlebih dahulu.']);
+        }
+
+        $validated = $request->validate([
+            'status_akhir' => ['required', Rule::in(['selesai', 'ditunda', 'dibatalkan'])],
+        ]);
+
+        // Update status akhir dan tahapan
+        $kegiatan->update([
+            'status_akhir' => $validated['status_akhir'],
+            'tahapan' => TahapanKegiatan::SELESAI,
+        ]);
+
+        return redirect()->route('pegawai.kegiatan.myIndex', ['tahapan' => 'selesai'])
+            ->with('success', 'Kegiatan berhasil diselesaikan.');
+    }
+
+    // ==================== PRIVATE HELPER METHODS ====================
+
+    /**
+     * Simpan foto-foto dokumentasi observasi.
+     *
+     * @param Request $request
+     * @param \App\Models\Dokumentasi $dokumentasi
+     * @return void
+     */
+    private function saveDokumentasiFotos(Request $request, $dokumentasi)
+    {
+        if ($request->hasFile('fotos')) {
+            foreach ($request->file('fotos') as $file) {
+                $path = $file->store('dokumentasi/fotos', 'public');
+                $dokumentasi->fotos()->create(['file_path' => $path]);
+            }
+        }
+    }
+
+    /**
+     * Simpan foto-foto dokumentasi penyerahan.
+     *
+     * @param Request $request
+     * @param \App\Models\Dokumentasi $dokumentasi
+     * @return void
+     */
+    private function savePenyerahanFotos(Request $request, $dokumentasi)
+    {
+        if ($request->hasFile('fotos')) {
+            foreach ($request->file('fotos') as $file) {
+                $path = $file->store('dokumentasi_foto', 'public');
+                $dokumentasi->fotos()->create(['file_path' => $path]);
+            }
+        }
+    }
+
+    /**
+     * Validasi data kebutuhan dari observasi.
+     *
+     * @param Request $request
+     * @return array
+     */
+    private function validateKebutuhanData(Request $request)
+    {
+        return $request->validate([
+            'nama_kebutuhan' => 'required|string|max:255',
+            'jumlah' => 'required|numeric|min:1',
+            'satuan' => 'required|string|max:50',
+            'harga_satuan' => 'required|numeric|min:0',
+        ]);
+    }
+
+    /**
+     * Validasi data dokumentasi penyerahan.
+     *
+     * @param Request $request
+     * @return array
+     */
+    private function validatePenyerahanData(Request $request)
+    {
+        return $request->validate([
+            'judul' => 'required|string|max:255',
+            'fotos' => 'required|array',
+            'fotos.*' => 'required|file'
+        ]);
+    }
+
+    /**
+     * Hapus file lama jika ada.
+     *
+     * @param string|null $filePath
+     * @return void
+     */
+    private function deleteOldFile($filePath)
+    {
+        if ($filePath && Storage::disk('public')->exists($filePath)) {
+            Storage::disk('public')->delete($filePath);
+        }
     }
 }

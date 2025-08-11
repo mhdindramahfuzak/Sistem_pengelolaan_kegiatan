@@ -5,19 +5,29 @@ import TextInput from '@/Components/TextInput';
 import InputError from '@/Components/InputError';
 import TextAreaInput from '@/Components/TextAreaInput';
 import PrimaryButton from '@/Components/PrimaryButton';
+import { useState } from 'react';
 
 export default function Create({ auth }) {
     const { data, setData, post, errors, processing } = useForm({
         nama_proposal: '',
-        deskripsi: '', // Tambahkan field deskripsi
-        tujuan: '',    // Tambahkan field tujuan
+        deskripsi: '', 
+        tujuan: '',    
         dokumen_path: null,
-        tanggal_pengajuan: new Date().toISOString().slice(0, 10), // Otomatis isi tanggal hari ini
+        tanggal_pengajuan: new Date().toISOString().slice(0, 10),
     });
+
+    const [fileName, setFileName] = useState('');
 
     const onSubmit = (e) => {
         e.preventDefault();
         post(route('proposal.store'));
+    };
+
+    const handleFileChange = (file) => {
+        if (file) {
+            setData('dokumen_path', file);
+            setFileName(file.name);
+        }
     };
 
     return (
@@ -45,7 +55,6 @@ export default function Create({ auth }) {
                                 <InputError message={errors.nama_proposal} className="mt-2" />
                             </div>
 
-                            {/* Input Field Baru untuk Deskripsi */}
                             <div className="mt-4">
                                 <InputLabel htmlFor="deskripsi" value="Deskripsi Proposal" />
                                 <TextAreaInput
@@ -59,7 +68,6 @@ export default function Create({ auth }) {
                                 <InputError message={errors.deskripsi} className="mt-2" />
                             </div>
 
-                            {/* Input Field Baru untuk Tujuan */}
                             <div className="mt-4">
                                 <InputLabel htmlFor="tujuan" value="Tujuan Proposal" />
                                 <TextAreaInput
@@ -86,22 +94,41 @@ export default function Create({ auth }) {
                                 <InputError message={errors.tanggal_pengajuan} className="mt-2" />
                             </div>
 
+                            {/* Area Upload File yang Baru */}
                             <div className="mt-4">
-                                <InputLabel htmlFor="dokumen_path" value="Dokumen Pendukung (PDF/DOC)" />
-                                <TextInput
-                                    id="dokumen_path"
-                                    type="file"
-                                    name="dokumen_path"
-                                    className="mt-1 block w-full"
-                                    onChange={(e) => setData('dokumen_path', e.target.files[0])}
-                                />
+                                <InputLabel htmlFor="dokumen_path" value="Unggah Proposal" />
+                                <div className="mt-1 relative">
+                                    <label className="cursor-pointer block">
+                                        <div className="flex items-center justify-between w-full px-4 py-3 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors">
+                                            <span className={`${fileName ? 'text-gray-900' : 'text-gray-500'}`}>
+                                                {fileName || 'Unggah file dalam bentuk Pdf'}
+                                            </span>
+                                            <div className="flex items-center justify-center w-6 h-6 bg-gray-100 rounded-full">
+                                                <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        <input
+                                            type="file"
+                                            className="hidden"
+                                            accept=".pdf,.doc,.docx"
+                                            onChange={(e) => handleFileChange(e.target.files[0])}
+                                        />
+                                    </label>
+                                </div>
                                 <InputError message={errors.dokumen_path} className="mt-2" />
                             </div>
 
-                            <div className="mt-6 flex justify-end">
-                                <PrimaryButton disabled={processing}>
-                                    Ajukan Proposal
-                                </PrimaryButton>
+                            <div className="mt-6">
+                                <button
+                                    type="submit"
+                                    disabled={processing}
+                                    className="w-full px-8 py-3 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    style={{ backgroundColor: '#25335C' }}
+                                >
+                                    {processing ? 'Mengirim...' : 'Kirim'}
+                                </button>
                             </div>
                         </form>
                     </div>

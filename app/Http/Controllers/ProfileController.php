@@ -18,6 +18,9 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): Response
     {
+        // --- KEMBALIKAN KE VERSI DEFAULT ---
+        // Menghapus pengiriman data 'auth' secara manual.
+        // Kita akan mengandalkan data yang sudah dibagikan oleh HandleInertiaRequests.php
         return Inertia::render('Profile/Edit', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status'),
