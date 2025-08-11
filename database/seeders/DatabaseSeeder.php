@@ -66,6 +66,18 @@ class DatabaseSeeder extends Seeder
         ]);
         $pegawai->assignRole('pegawai');
 
+        // Tambahan: Membuat 5 Pegawai
+        for ($i = 1; $i <= 5; $i++) {
+            $pegawai = User::factory()->create([
+                'name' => 'Pegawai ' . $i,
+                'email' => 'pegawai' . $i . '@diskp.com',
+                'password' => Hash::make('password'),
+                'role' => 'pegawai',
+                'no_hp' => '0812345678' . str_pad($i, 2, '0', STR_PAD_LEFT),
+            ]);
+            $pegawai->assignRole('pegawai');
+        }
+
         // Membuat User dengan peran Pengusul
         $pengusul = User::factory()->create([
             'name' => 'Pengusul User',
@@ -75,5 +87,24 @@ class DatabaseSeeder extends Seeder
             'no_hp' => '9083902183912',
         ]);
         $pengusul->assignRole('pengusul');
+
+        // Tambahan: Membuat 2 Pengusul (nias & tanjungbalai)
+        $pengusulNias = User::factory()->create([
+            'name' => 'Pengusul Nias',
+            'email' => 'pengusul_nias@diskp.com',
+            'password' => Hash::make('password'),
+            'role' => 'pengusul',
+            'no_hp' => '081234569001',
+        ]);
+        $pengusulNias->assignRole('pengusul');
+
+        $pengusulTanjungbalai = User::factory()->create([
+            'name' => 'Pengusul Tanjungbalai',
+            'email' => 'pengusul_tanjungbalai@diskp.com',
+            'password' => Hash::make('password'),
+            'role' => 'pengusul',
+            'no_hp' => '081234569002',
+        ]);
+        $pengusulTanjungbalai->assignRole('pengusul');
     }
 }

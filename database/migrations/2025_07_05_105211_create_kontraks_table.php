@@ -13,13 +13,16 @@ return new class extends Migration
     {
         Schema::create('kontraks', function (Blueprint $table) {
             $table->id();
-            // Menghubungkan ke tabel dokumentasi
             $table->foreignId('kegiatan_id')->constrained('kegiatans')->onDelete('cascade');
             $table->string('nama_kontrak');
-            $table->string('file_path');
+            $table->string('nomor_kontrak'); // TAMBAHKAN field ini
+            $table->date('tanggal_kontrak'); // TAMBAHKAN field ini
+            $table->decimal('nilai_kontrak', 15, 2)->nullable(); // TAMBAHKAN field ini untuk nilai kontrak
+            $table->string('file_path'); // Path untuk file kontrak
             $table->timestamps();
         });
     }
+
     /**
      * Reverse the migrations.
      */

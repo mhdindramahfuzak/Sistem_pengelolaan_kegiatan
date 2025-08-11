@@ -37,19 +37,19 @@ class ManajemenPenyerahanController extends Controller
             'file_sktl' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048',
         ]);
 
-        // Hapus file SKTL lama jika ada untuk menghindari penumpukan file
-        if ($kegiatan->file_sktl && Storage::disk('public')->exists($kegiatan->file_sktl)) {
-            Storage::disk('public')->delete($kegiatan->file_sktl);
+        // Hapus file SKTL lama jika ada
+        if ($kegiatan->sktl_penyerahan_path && Storage::disk('public')->exists($kegiatan->sktl_penyerahan_path)) {
+            Storage::disk('public')->delete($kegiatan->sktl_penyerahan_path);
         }
 
-        // Simpan file SKTL yang baru diunggah
-        $filePath = $request->file('file_sktl')->store('sktl', 'public');
+        // Simpan file SKTL penyerahan (PERBAIKAN)
+        $filePath = $request->file('file_sktl')->store('sktl_penyerahan', 'public');
 
         // Update data pada tabel kegiatan
         $kegiatan->update([
             'tanggal_penyerahan' => $validated['tanggal_penyerahan'],
-            'file_sktl' => $filePath,
-            'tahapan' => TahapanKegiatan::DOKUMENTASI_PENYERAHAN, // Lanjutkan ke tahapan berikutnya
+            'sktl_penyerahan_path' => $filePath, // PERBAIKAN: simpan ke field yang benar
+            'tahapan' => TahapanKegiatan::DOKUMENTASI_PENYERAHAN,
         ]);
 
         return redirect()->route('manajemen.penyerahan.index')

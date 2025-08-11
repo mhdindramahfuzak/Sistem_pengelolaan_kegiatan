@@ -10,15 +10,13 @@ import TextInput from '@/Components/TextInput';
 import Pagination from '@/Components/Pagination';
 
 // Komponen terpisah untuk setiap baris agar state tidak tercampur
-const KegiatanRow = ({ kegiatan }) => {
+const KegiatanRow = ({ kegiatan, index }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    // --- PERUBAHAN 1: Gunakan `post` dan tambahkan `_method: 'patch'` ---
-    // Kita akan mengirim sebagai POST, tapi memberitahu Laravel ini adalah PATCH.
     const { data, setData, post, processing, errors, reset } = useForm({
         tanggal_penyerahan: '',
         file_sktl: null,
-        _method: 'patch', // Memberitahu Laravel untuk memperlakukan ini sebagai request PATCH
+        _method: 'patch',
     });
 
     const openModal = () => setIsModalOpen(true);
@@ -27,19 +25,26 @@ const KegiatanRow = ({ kegiatan }) => {
         reset();
     };
 
-    // --- PERUBAHAN 2: Panggil `post` saat submit ---
     const handleSubmit = (e) => {
         e.preventDefault();
-        // Mengirim sebagai POST. Inertia akan otomatis membuat FormData karena ada file.
-        // Field `_method: 'patch'` yang kita set di atas akan disertakan.
         post(route('manajemen.penyerahan.update', kegiatan.id), {
             onSuccess: () => {
                 closeModal();
-                Swal.fire('Berhasil!', 'Kegiatan telah dilanjutkan ke tahap penyerahan.', 'success');
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: 'Kegiatan telah dilanjutkan ke tahap penyerahan.',
+                    timer: 3000,
+                    showConfirmButton: false,
+                });
             },
             onError: (err) => {
                 const errorMessages = Object.values(err).join('\n');
-                Swal.fire('Gagal!', `Terjadi kesalahan. \n\n${errorMessages}`, 'error');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal!',
+                    text: `Terjadi kesalahan. \n\n${errorMessages}`,
+                });
             },
             preserveScroll: true,
         });
@@ -47,14 +52,15 @@ const KegiatanRow = ({ kegiatan }) => {
 
     return (
         <>
-            <tr className="bg-white border-b hover:bg-gray-50">
-                <td className="px-6 py-4 font-medium text-gray-900">{kegiatan.nama_kegiatan}</td>
-                <td className="px-6 py-4">{kegiatan.tim?.nama_tim || 'Belum ada tim'}</td>
-                <td className="px-6 py-4">{kegiatan.tanggal_kegiatan}</td>
-                <td className="px-6 py-4 text-right">
+            <tr className="border-b border-gray-200 hover:bg-gray-50">
+                <td className="px-6 py-4 border-r border-gray-200">{index + 1}</td>
+                <td className="px-6 py-4 border-r border-gray-200 font-medium">{kegiatan.nama_kegiatan}</td>
+                <td className="px-6 py-4 border-r border-gray-200">{kegiatan.tim?.nama_tim || 'Belum ada tim'}</td>
+                <td className="px-6 py-4 border-r border-gray-200">{kegiatan.tanggal_kegiatan}</td>
+                <td className="px-6 py-4 text-center">
                     <button
                         onClick={openModal}
-                        className="font-medium text-blue-600 hover:underline"
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
                     >
                         Proses Penyerahan
                     </button>
@@ -94,6 +100,7 @@ const KegiatanRow = ({ kegiatan }) => {
                             id="file_sktl"
                             type="file"
                             name="file_sktl"
+                            accept=".pdf,.jpg,.jpeg,.png"
                             className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                             onChange={(e) => setData('file_sktl', e.target.files[0])}
                             required
@@ -115,51 +122,88 @@ const KegiatanRow = ({ kegiatan }) => {
     );
 };
 
-
 export default function IndexPenyerahan({ auth, kegiatans, success }) {
     return (
         <AuthenticatedLayout
             user={auth.user}
-            header={<h2 className="font-semibold text-xl text-gray-800 leading-tight">Manajemen Penyerahan Kegiatan</h2>}
+            header={
+                <div>
+                    <h2 className="font-semibold text-xl text-white leading-tight">
+                        Manajemen Penyerahan Kegiatan
+                    </h2>
+                </div>
+            }
         >
             <Head title="Manajemen Penyerahan" />
 
-            <div className="py-12">
-                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                    <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                        <div className="p-6 text-gray-900">
-                            <p className="mb-4 text-gray-600">
-                                Daftar kegiatan yang telah menyelesaikan tahap observasi dan siap untuk dilanjutkan ke tahap penyerahan.
-                            </p>
-                            
-                            <div className="relative overflow-x-auto">
-                                <table className="w-full text-sm text-left text-gray-500">
-                                    <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+            <div className="py-6">
+                <div className="max-w-full mx-auto">
+                    {success && (
+                        <div className="bg-emerald-500 py-2 px-4 rounded mb-4 text-white">
+                            {success}
+                        </div>
+                    )}
+                    
+                    {/* Header dengan Judul */}
+                    <div className="flex justify-center items-center mb-6">
+                        <h3 className="text-xl font-bold text-gray-800">MANAJEMEN PENYERAHAN KEGIATAN</h3>
+                    </div>
+
+                    {/* Deskripsi */}
+                    <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6 rounded">
+                        <p className="text-blue-800 text-sm">
+                            <strong>Info:</strong> Daftar kegiatan yang telah menyelesaikan tahap observasi dan siap untuk dilanjutkan ke tahap penyerahan.
+                        </p>
+                    </div>
+                    
+                    {/* Container dengan background putih dan shadow */}
+                    <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                        
+                        {/* Table Container */}
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead>
+                                    <tr className="bg-[#394B7A] text-white">
+                                        <th className="px-6 py-4 text-left font-semibold border-r border-[#4A5B8F]">NO</th>
+                                        <th className="px-6 py-4 text-left font-semibold border-r border-[#4A5B8F]">Nama Kegiatan</th>
+                                        <th className="px-6 py-4 text-left font-semibold border-r border-[#4A5B8F]">Tim Pelaksana</th>
+                                        <th className="px-6 py-4 text-left font-semibold border-r border-[#4A5B8F]">Tanggal Kegiatan</th>
+                                        <th className="px-6 py-4 text-center font-semibold">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {kegiatans.data && kegiatans.data.length > 0 ? (
+                                        kegiatans.data.map((kegiatan, index) => (
+                                            <KegiatanRow 
+                                                key={kegiatan.id} 
+                                                kegiatan={kegiatan} 
+                                                index={((kegiatans.meta.current_page - 1) * kegiatans.meta.per_page) + index}
+                                            />
+                                        ))
+                                    ) : (
                                         <tr>
-                                            <th scope="col" className="px-6 py-3">Nama Kegiatan</th>
-                                            <th scope="col" className="px-6 py-3">Tim Pelaksana</th>
-                                            <th scope="col" className="px-6 py-3">Tanggal Kegiatan</th>
-                                            <th scope="col" className="px-6 py-3 text-right">Aksi</th>
+                                            <td colSpan="5" className="px-6 py-12 text-center text-gray-500">
+                                                <div className="flex flex-col items-center">
+                                                    <svg className="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                                    </svg>
+                                                    <p className="text-lg font-medium">Tidak ada kegiatan yang perlu diproses</p>
+                                                    <p className="text-sm mt-1">Belum ada kegiatan yang siap untuk tahap penyerahan saat ini.</p>
+                                                </div>
+                                            </td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        {kegiatans.data.length > 0 ? (
-                                            kegiatans.data.map(kegiatan => (
-                                                <KegiatanRow key={kegiatan.id} kegiatan={kegiatan} />
-                                            ))
-                                        ) : (
-                                            <tr>
-                                                <td colSpan="4" className="px-6 py-4 text-center">
-                                                    Tidak ada kegiatan yang perlu diproses saat ini.
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                            <Pagination className="mt-6" links={kegiatans.meta.links} />
+                                    )}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
+
+                    {/* Pagination */}
+                    {kegiatans.meta && kegiatans.meta.links && (
+                        <div className="mt-6">
+                            <Pagination links={kegiatans.meta.links} />
+                        </div>
+                    )}
                 </div>
             </div>
         </AuthenticatedLayout>

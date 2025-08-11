@@ -2,37 +2,74 @@ import { Link } from '@inertiajs/react';
 
 export default function PerjalananDinasView({ kegiatans, openModal }) {
     return (
-        <table className="w-full text-sm text-left rtl:text-right text-gray-500">
-            <thead className="text-xs text-gray-100 uppercase bg-gray-700">
-                <tr className="text-nowrap">
-                    <th className="px-4 py-3">Nama Kegiatan</th>
-                    <th className="px-4 py-3">Proposal</th>
-                    <th className="px-4 py-3">Tanggal</th>
-                    <th className="px-4 py-3 text-center">Aksi</th>
-                </tr>
-            </thead>
-            <tbody>
-                {kegiatans.data.length > 0 ? (
-                    kegiatans.data.map((kegiatan) => (
-                        <tr key={kegiatan.id} className="bg-white border-b">
-                            <td className="px-4 py-2">{kegiatan.nama_kegiatan}</td>
-                            <td className="px-4 py-2"><Link href={route('proposal.show', kegiatan.proposal.id)} className="text-blue-600 hover:underline">Lihat</Link></td>
-                            <td className="px-4 py-2">{kegiatan.tanggal_kegiatan}</td>
-                            <td className="px-4 py-2 text-center">
-                                <button onClick={() => openModal('confirm', kegiatan)} className="font-medium text-white bg-teal-500 hover:bg-teal-600 py-2 px-4 rounded-lg text-nowrap">
-                                    Konfirmasi Kehadiran
-                                </button>
-                            </td>
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+                <table className="w-full">
+                    <thead>
+                        <tr className="bg-[#394B7A] text-white">
+                            <th className="px-6 py-4 text-left font-semibold border-r border-[#4A5B8F]">
+                                NO
+                            </th>
+                            <th className="px-6 py-4 text-left font-semibold border-r border-[#4A5B8F]">
+                                Nama Kegiatan
+                            </th>
+                            <th className="px-6 py-4 text-left font-semibold border-r border-[#4A5B8F]">
+                                Proposal
+                            </th>
+                            <th className="px-6 py-4 text-left font-semibold border-r border-[#4A5B8F]">
+                                Tanggal
+                            </th>
+                            <th className="px-6 py-4 text-center font-semibold">
+                                Aksi
+                            </th>
                         </tr>
-                    ))
-                ) : (
-                    <tr>
-                        <td colSpan="4" className="px-4 py-6 text-center text-gray-500">
-                            Tidak ada kegiatan pada tahap ini.
-                        </td>
-                    </tr>
-                )}
-            </tbody>
-        </table>
+                    </thead>
+                    <tbody>
+                        {kegiatans.data && kegiatans.data.length > 0 ? (
+                            kegiatans.data.map((kegiatan, index) => (
+                                <tr
+                                    key={kegiatan.id}
+                                    className="border-b border-gray-200 hover:bg-gray-50"
+                                >
+                                    <td className="px-6 py-4 border-r border-gray-200">
+                                        {index + 1}
+                                    </td>
+                                    <td className="px-6 py-4 border-r border-gray-200 font-medium">
+                                        {kegiatan.nama_kegiatan}
+                                    </td>
+                                    <td className="px-6 py-4 border-r border-gray-200">
+                                        <Link 
+                                            href={route('proposal.show', kegiatan.proposal.id)} 
+                                            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
+                                        >
+                                            Lihat
+                                        </Link>
+                                    </td>
+                                    <td className="px-6 py-4 border-r border-gray-200">
+                                        {kegiatan.tanggal_kegiatan}
+                                    </td>
+                                    <td className="px-6 py-4 text-center">
+                                        <div className="flex justify-center">
+                                            <button 
+                                                onClick={() => openModal('confirm', kegiatan)} 
+                                                className="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
+                                            >
+                                                Konfirmasi Kehadiran
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="5" className="px-6 py-8 text-center text-gray-500 font-medium">
+                                    Tidak ada kegiatan perjalanan dinas yang perlu dikonfirmasi
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     );
 }

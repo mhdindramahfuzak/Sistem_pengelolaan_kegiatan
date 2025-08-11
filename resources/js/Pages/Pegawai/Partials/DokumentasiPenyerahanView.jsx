@@ -12,6 +12,7 @@ export default function DokumentasiPenyerahanView({ kegiatans }) {
     const [modalState, setModalState] = useState({
         isPenyerahanOpen: false,
         isPihakKetigaOpen: false,
+        isKontrakOpen: false,
     });
     const [selectedKegiatan, setSelectedKegiatan] = useState(null);
 
@@ -26,6 +27,15 @@ export default function DokumentasiPenyerahanView({ kegiatans }) {
         file_pihak_ketiga: null,
     });
 
+    // Form untuk KONTRAK
+    const kontrakForm = useForm({
+        nomor_kontrak: '',
+        tanggal_kontrak: '',
+        nilai_kontrak: '',
+        nama_pihak_ketiga: '',
+        dokumen_kontrak: null,
+    });
+
     // --- Fungsi untuk membuka dan menutup dialog ---
     const openModal = (type, kegiatan) => {
         setSelectedKegiatan(kegiatan);
@@ -33,14 +43,21 @@ export default function DokumentasiPenyerahanView({ kegiatans }) {
             setModalState({ ...modalState, isPenyerahanOpen: true });
         } else if (type === 'pihakKetiga') {
             setModalState({ ...modalState, isPihakKetigaOpen: true });
+        } else if (type === 'kontrak') {
+            setModalState({ ...modalState, isKontrakOpen: true });
         }
     };
 
     const closeModal = () => {
-        setModalState({ isPenyerahanOpen: false, isPihakKetigaOpen: false });
+        setModalState({ 
+            isPenyerahanOpen: false, 
+            isPihakKetigaOpen: false, 
+            isKontrakOpen: false 
+        });
         setSelectedKegiatan(null);
         penyerahanForm.reset();
         pihakKetigaForm.reset();
+        kontrakForm.reset();
     };
 
     // --- Handler untuk Submit Form ---
@@ -81,75 +98,128 @@ export default function DokumentasiPenyerahanView({ kegiatans }) {
         });
     };
 
+    // Handler untuk form KONTRAK
+    const handleKontrakSubmit = (e) => {
+        e.preventDefault();
+        if (!selectedKegiatan) return;
+
+        kontrakForm.post(route('pegawai.kegiatan.storeKontrak', selectedKegiatan.id), {
+            onSuccess: () => {
+                closeModal();
+                Swal.fire('Berhasil!', 'Data kontrak berhasil disimpan.', 'success');
+            },
+            onError: (err) => {
+                const errorMessages = Object.values(err).join('<br/>');
+                Swal.fire('Gagal!', `Terjadi kesalahan:<br/><br/>${errorMessages}`, 'error');
+            },
+            preserveScroll: true,
+        });
+    };
 
     return (
         <>
-            <table className="w-full text-sm text-left rtl:text-right text-gray-500">
-                <thead className="text-xs text-gray-100 uppercase bg-gray-700">
-                    <tr className="text-nowrap">
-                        <th className="px-4 py-3">Nama Kegiatan</th>
-                        <th className="px-4 py-3">Tanggal</th>
-                        <th className="px-4 py-3">Status Penyerahan</th>
-                        <th className="px-4 py-3">Dokumen Pihak Ke-3</th>
-                        <th className="px-4 py-3 text-center">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {kegiatans.data.length > 0 ? (
-                        kegiatans.data.map((kegiatan) => {
-                            const dokPenyerahan = (kegiatan.dokumentasi ?? []).find(d => d.tipe === 'penyerahan');
-                            return (
-                                <tr key={kegiatan.id} className="bg-white border-b">
-                                    <td className="px-4 py-2">{kegiatan.nama_kegiatan}</td>
-                                    <td className="px-4 py-2">{kegiatan.tanggal_kegiatan}</td>
-                                    <td className="px-4 py-2">
-                                        {dokPenyerahan ? (
-                                            <span className="px-2 py-1 font-semibold leading-tight text-green-700 bg-green-100 rounded-full">Sudah Diisi</span>
-                                        ) : (
-                                            <span className="px-2 py-1 font-semibold leading-tight text-orange-700 bg-orange-100 rounded-full">Belum Diisi</span>
-                                        )}
-                                    </td>
-                                    <td className="px-4 py-2">
-                                        {kegiatan.file_pihak_ketiga_path ? (
-                                            <div className="flex items-center gap-2">
-                                                <span className="px-2 py-1 font-semibold leading-tight text-green-700 bg-green-100 rounded-full">Sudah Diunggah</span>
-                                                <a href={`/storage/${kegiatan.file_pihak_ketiga_path}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-xs">(Lihat)</a>
-                                            </div>
-                                        ) : (
-                                            <button onClick={() => openModal('pihakKetiga', kegiatan)} className="font-medium text-white bg-teal-500 hover:bg-teal-600 py-1 px-3 rounded-lg text-xs text-nowrap">
-                                                Unggah File
-                                            </button>
-                                        )}
-                                    </td>
-                                    <td className="px-4 py-2 text-center">
-                                        {/* --- PERBAIKAN LOGIKA DI SINI --- */}
-                                        {dokPenyerahan ? (
-                                            // Jika sudah diisi, arahkan ke halaman penyelesaian, BUKAN arsip
-                                            <Link 
-                                                href={route('pegawai.kegiatan.myIndex', { tahapan: 'penyelesaian' })} 
-                                                className="font-medium text-white bg-green-500 hover:bg-green-600 py-2 px-4 rounded-lg text-nowrap"
-                                            >
-                                                Lanjutkan Penyelesaian
-                                            </Link>
-                                        ) : (
-                                            // Jika belum, buka modal untuk mengisi
-                                            <button onClick={() => openModal('penyerahan', kegiatan)} className="font-medium text-white bg-purple-500 hover:bg-purple-600 py-2 px-4 rounded-lg text-nowrap">
-                                                Lakukan Penyerahan
-                                            </button>
-                                        )}
+            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full">
+                        <thead>
+                            <tr className="bg-[#394B7A] text-white">
+                                <th className="px-6 py-4 text-left font-semibold border-r border-[#4A5B8F]">
+                                    Nama Kegiatan
+                                </th>
+                                <th className="px-6 py-4 text-left font-semibold border-r border-[#4A5B8F]">
+                                    Tanggal
+                                </th>
+                                <th className="px-6 py-4 text-left font-semibold border-r border-[#4A5B8F]">
+                                    Status Penyerahan
+                                </th>
+                                <th className="px-6 py-4 text-left font-semibold border-r border-[#4A5B8F]">
+                                    Dokumen Kontrak
+                                </th>
+                                <th className="px-6 py-4 text-center font-semibold">
+                                    Aksi
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {kegiatans.data.length > 0 ? (
+                                kegiatans.data.map((kegiatan) => {
+                                    const dokPenyerahan = (kegiatan.dokumentasi ?? []).find(d => d.tipe === 'penyerahan');
+                                    return (
+                                        <tr key={kegiatan.id} className="border-b border-gray-200 hover:bg-gray-50">
+                                            <td className="px-6 py-4 border-r border-gray-200 font-medium">
+                                                {kegiatan.nama_kegiatan}
+                                            </td>
+                                            <td className="px-6 py-4 border-r border-gray-200">
+                                                {kegiatan.tanggal_kegiatan}
+                                            </td>
+                                            <td className="px-6 py-4 border-r border-gray-200">
+                                                {dokPenyerahan ? (
+                                                    <span className="px-3 py-1 text-sm font-medium text-green-700 bg-green-100 rounded-full">
+                                                        Sudah Diisi
+                                                    </span>
+                                                ) : (
+                                                    <span className="px-3 py-1 text-sm font-medium text-orange-700 bg-orange-100 rounded-full">
+                                                        Belum Diisi
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 border-r border-gray-200">
+                                                {kegiatan.kontrak ? (
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="px-3 py-1 text-sm font-medium text-green-700 bg-green-100 rounded-full">
+                                                            Sudah Ada
+                                                        </span>
+                                                        <a 
+                                                            href={`/storage/${kegiatan.kontrak.dokumen_kontrak}`} 
+                                                            target="_blank" 
+                                                            rel="noopener noreferrer" 
+                                                            className="text-blue-600 hover:underline text-sm"
+                                                        >
+                                                            (Lihat Kontrak)
+                                                        </a>
+                                                    </div>
+                                                ) : (
+                                                    <button 
+                                                        onClick={() => openModal('kontrak', kegiatan)} 
+                                                        className="bg-teal-500 hover:bg-teal-600 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
+                                                    >
+                                                        Input Kontrak
+                                                    </button>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <div className="flex justify-center">
+                                                    {dokPenyerahan ? (
+                                                        <Link 
+                                                            href={route('pegawai.kegiatan.myIndex', { tahapan: 'penyelesaian' })} 
+                                                            className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
+                                                        >
+                                                            Lanjutkan Penyelesaian
+                                                        </Link>
+                                                    ) : (
+                                                        <button 
+                                                            onClick={() => openModal('penyerahan', kegiatan)} 
+                                                            className="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
+                                                        >
+                                                            Lakukan Penyerahan
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            ) : (
+                                <tr>
+                                    <td colSpan="5" className="px-6 py-8 text-center text-gray-500 font-medium">
+                                        Tidak ada kegiatan pada tahap ini.
                                     </td>
                                 </tr>
-                            );
-                        })
-                    ) : (
-                        <tr>
-                            <td colSpan="5" className="px-4 py-6 text-center text-gray-500">
-                                Tidak ada kegiatan pada tahap ini.
-                            </td>
-                        </tr>
-                    )}
-                </tbody>
-            </table>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
             {/* Dialog Box untuk DOKUMENTASI PENYERAHAN */}
             <Dialog show={modalState.isPenyerahanOpen} onClose={closeModal}>
@@ -204,7 +274,7 @@ export default function DokumentasiPenyerahanView({ kegiatans }) {
                 </form>
             </Dialog>
 
-            {/* Dialog Box untuk UPLOAD FILE PIHAK KETIGA (sudah ada sebelumnya) */}
+            {/* Dialog Box untuk UPLOAD FILE PIHAK KETIGA */}
             <Dialog show={modalState.isPihakKetigaOpen} onClose={closeModal}>
                  <form onSubmit={handlePihakKetigaSubmit} className="p-6">
                     <h2 className="text-lg font-medium text-gray-900">
@@ -236,6 +306,105 @@ export default function DokumentasiPenyerahanView({ kegiatans }) {
                         </SecondaryButton>
                         <PrimaryButton className="ms-3" disabled={pihakKetigaForm.processing}>
                             {pihakKetigaForm.processing ? 'Mengunggah...' : 'Unggah'}
+                        </PrimaryButton>
+                    </div>
+                </form>
+            </Dialog>
+
+            {/* Dialog Box untuk INPUT KONTRAK */}
+            <Dialog show={modalState.isKontrakOpen} onClose={closeModal}>
+                <form onSubmit={handleKontrakSubmit} className="p-6">
+                    <h2 className="text-lg font-medium text-gray-900">
+                        Input Data Kontrak
+                    </h2>
+                    <p className="mt-1 text-sm text-gray-600">
+                        Untuk kegiatan: <span className="font-semibold">{selectedKegiatan?.nama_kegiatan}</span>
+                    </p>
+
+                    <div className="mt-6">
+                        <label htmlFor="nomor_kontrak" className="block text-sm font-medium text-gray-700">
+                            Nomor Kontrak
+                        </label>
+                        <TextInput
+                            id="nomor_kontrak"
+                            name="nomor_kontrak"
+                            value={kontrakForm.data.nomor_kontrak}
+                            className="mt-1 block w-full"
+                            onChange={(e) => kontrakForm.setData('nomor_kontrak', e.target.value)}
+                            required
+                        />
+                        <InputError message={kontrakForm.errors.nomor_kontrak} className="mt-2" />
+                    </div>
+
+                    <div className="mt-4">
+                        <label htmlFor="tanggal_kontrak" className="block text-sm font-medium text-gray-700">
+                            Tanggal Kontrak
+                        </label>
+                        <input
+                            id="tanggal_kontrak"
+                            type="date"
+                            name="tanggal_kontrak"
+                            value={kontrakForm.data.tanggal_kontrak}
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                            onChange={(e) => kontrakForm.setData('tanggal_kontrak', e.target.value)}
+                            required
+                        />
+                        <InputError message={kontrakForm.errors.tanggal_kontrak} className="mt-2" />
+                    </div>
+
+                    <div className="mt-4">
+                        <label htmlFor="nilai_kontrak" className="block text-sm font-medium text-gray-700">
+                            Nilai Kontrak (Rp)
+                        </label>
+                        <TextInput
+                            id="nilai_kontrak"
+                            name="nilai_kontrak"
+                            type="number"
+                            value={kontrakForm.data.nilai_kontrak}
+                            className="mt-1 block w-full"
+                            onChange={(e) => kontrakForm.setData('nilai_kontrak', e.target.value)}
+                            required
+                        />
+                        <InputError message={kontrakForm.errors.nilai_kontrak} className="mt-2" />
+                    </div>
+
+                    <div className="mt-4">
+                        <label htmlFor="nama_pihak_ketiga" className="block text-sm font-medium text-gray-700">
+                            Pihak ketiga (Nama Pihak Ketiga)
+                        </label>
+                        <TextInput
+                            id="nama_pihak_ketiga"
+                            name="nama_pihak_ketiga"
+                            value={kontrakForm.data.nama_pihak_ketiga}
+                            className="mt-1 block w-full"
+                            onChange={(e) => kontrakForm.setData('nama_pihak_ketiga', e.target.value)}
+                            required
+                        />
+                        <InputError message={kontrakForm.errors.nama_pihak_ketiga} className="mt-2" />
+                    </div>
+
+                    <div className="mt-4">
+                        <label htmlFor="dokumen_kontrak" className="block text-sm font-medium text-gray-700">
+                            Upload Dokumen Kontrak (PDF)
+                        </label>
+                        <input
+                            id="dokumen_kontrak"
+                            type="file"
+                            name="dokumen_kontrak"
+                            className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100"
+                            onChange={(e) => kontrakForm.setData('dokumen_kontrak', e.target.files[0])}
+                            accept=".pdf"
+                            required
+                        />
+                        <InputError message={kontrakForm.errors.dokumen_kontrak} className="mt-2" />
+                    </div>
+
+                    <div className="mt-6 flex justify-end">
+                        <SecondaryButton type="button" onClick={closeModal}>
+                            Batal
+                        </SecondaryButton>
+                        <PrimaryButton className="ms-3" disabled={kontrakForm.processing}>
+                            {kontrakForm.processing ? 'Menyimpan...' : 'Simpan'}
                         </PrimaryButton>
                     </div>
                 </form>

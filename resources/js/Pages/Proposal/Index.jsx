@@ -107,3 +107,4 @@ export default function Index({ auth, proposals, success }) {
     </AuthenticatedLayout>
   );
 }
+  

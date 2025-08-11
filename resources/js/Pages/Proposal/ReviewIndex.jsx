@@ -41,49 +41,103 @@ export default function ReviewIndex({ auth, proposals }) {
     return (
         <AuthenticatedLayout
             user={auth.user}
-            header={<h2 className="font-semibold text-xl text-gray-800 leading-tight">Verifikasi Proposal Masuk</h2>}
+            header={
+                <div>
+                    <h2 className="font-semibold text-xl text-white leading-tight">
+                        Verifikasi Proposal Masuk
+                    </h2>
+                </div>
+            }
         >
             <Head title="Verifikasi Proposal" />
 
-            <div className="py-12">
-                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                    <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                        <div className="p-6 text-gray-900">
-                            <div className="overflow-auto">
-                                <table className="w-full text-sm text-left text-gray-500">
-                                    <thead className="text-xs text-gray-700 uppercase bg-gray-50">
-                                        <tr>
-                                            <th className="px-6 py-3">Nama Proposal</th>
-                                            <th className="px-6 py-3">Pengusul</th>
-                                            <th className="px-6 py-3">Tanggal Diajukan</th>
-                                            <th className="px-6 py-3 text-right">Aksi</th>
+            <div className="py-6">
+                <div className="max-w-full mx-auto">
+                    {/* Header dengan Judul */}
+                    <div className="flex justify-center items-center mb-6">
+                        <h3 className="text-xl font-bold text-gray-800">DAFTAR PROPOSAL UNTUK VERIFIKASI</h3>
+                    </div>
+                    
+                    {/* Table Container */}
+                    <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead>
+                                    <tr className="bg-[#394B7A] text-white">
+                                        <th className="px-6 py-4 text-left font-semibold border-r border-[#4A5B8F]">NO</th>
+                                        <th className="px-6 py-4 text-left font-semibold border-r border-[#4A5B8F]">Nama Proposal</th>
+                                        <th className="px-6 py-4 text-left font-semibold border-r border-[#4A5B8F]">Pengusul</th>
+                                        <th className="px-6 py-4 text-left font-semibold border-r border-[#4A5B8F]">Tanggal Diajukan</th>
+                                        <th className="px-6 py-4 text-center font-semibold">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {proposals.data.map((proposal, index) => (
+                                        <tr
+                                            key={proposal.id}
+                                            className="border-b border-gray-200 hover:bg-gray-50"
+                                        >
+                                            <td className="px-6 py-4 border-r border-gray-200">{index + 1}</td>
+                                            <td className="px-6 py-4 border-r border-gray-200 font-medium">{proposal.nama_proposal}</td>
+                                            <td className="px-6 py-4 border-r border-gray-200">{proposal.pengusul.name}</td>
+                                            <td className="px-6 py-4 border-r border-gray-200">{proposal.tanggal_pengajuan}</td>
+                                            <td className="px-6 py-4 text-center">
+                                                <div className="flex justify-center space-x-2">
+                                                    <button
+                                                        onClick={() => openConfirmModal(proposal, 'disetujui')}
+                                                        className="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
+                                                    >
+                                                        Setujui
+                                                    </button>
+                                                    <button
+                                                        onClick={() => openConfirmModal(proposal, 'ditolak')}
+                                                        className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
+                                                    >
+                                                        Tolak
+                                                    </button>
+                                                </div>
+                                            </td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        {proposals.data.map((proposal) => (
-                                            <tr key={proposal.id} className="bg-white border-b">
-                                                <td className="px-6 py-4 font-medium">{proposal.nama_proposal}</td>
-                                                <td className="px-6 py-4">{proposal.pengusul.name}</td>
-                                                <td className="px-6 py-4">{proposal.tanggal_pengajuan}</td>
-                                                <td className="px-6 py-4 text-right space-x-2">
-                                                    <PrimaryButton onClick={() => openConfirmModal(proposal, 'disetujui')}>Setujui</PrimaryButton>
-                                                    <DangerButton onClick={() => openConfirmModal(proposal, 'ditolak')}>Tolak</DangerButton>
+                                    ))}
+                                    
+                                    {/* Jika tidak ada data */}
+                                    {proposals.data.length === 0 && (
+                                        <tr className="border-b border-gray-200">
+                                            <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
+                                                Tidak ada proposal yang perlu diverifikasi.
+                                            </td>
+                                        </tr>
+                                    )}
+                                    
+                                    {/* Empty rows untuk konsistensi visual jika data sedikit */}
+                                    {proposals.data.length > 0 && proposals.data.length < 8 && 
+                                        Array.from({ length: 8 - proposals.data.length }, (_, index) => (
+                                            <tr key={`empty-${index}`} className="border-b border-gray-200">
+                                                <td className="px-6 py-8 border-r border-gray-200"></td>
+                                                <td className="px-6 py-8 border-r border-gray-200"></td>
+                                                <td className="px-6 py-8 border-r border-gray-200"></td>
+                                                <td className="px-6 py-8 border-r border-gray-200"></td>
+                                                <td className="px-6 py-8">
+                                                    <div className="flex justify-center space-x-2">
+                                                        <button className="bg-emerald-500 text-white px-3 py-1 rounded text-sm font-medium">
+                                                            Setujui
+                                                        </button>
+                                                        <button className="bg-red-500 text-white px-3 py-1 rounded text-sm font-medium">
+                                                            Tolak
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
-                                        ))}
-                                        {proposals.data.length === 0 && (
-                                            <tr>
-                                                <td colSpan="4" className="px-6 py-4 text-center">Tidak ada proposal yang perlu diverifikasi.</td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
+                                        ))
+                                    }
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
             </div>
 
+            {/* Modal Konfirmasi */}
             <Modal show={showConfirmModal} onClose={closeModal}>
                 <form onSubmit={onConfirm} className="p-6">
                     <h2 className="text-lg font-medium text-gray-900">
@@ -95,7 +149,13 @@ export default function ReviewIndex({ auth, proposals }) {
                     {actionType === 'ditolak' && (
                         <div className="mt-4">
                             <InputLabel htmlFor="alasan_penolakan" value="Alasan Penolakan (Wajib diisi)" />
-                            <TextAreaInput id="alasan_penolakan" className="mt-1 block w-full" value={data.alasan_penolakan} onChange={e => setData('alasan_penolakan', e.target.value)} required />
+                            <TextAreaInput 
+                                id="alasan_penolakan" 
+                                className="mt-1 block w-full" 
+                                value={data.alasan_penolakan} 
+                                onChange={e => setData('alasan_penolakan', e.target.value)} 
+                                required 
+                            />
                             <InputError message={errors.alasan_penolakan} className="mt-2" />
                         </div>
                     )}
