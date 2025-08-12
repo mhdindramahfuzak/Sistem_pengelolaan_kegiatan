@@ -12,6 +12,10 @@ export default function Index({ auth, users, success }) {
     router.delete(route('user.destroy', user.id));
   };
 
+  // Gunakan users secara langsung jika itu array, atau users.data jika paginated
+  const userData = Array.isArray(users) ? users : (users.data || []);
+  const totalUsers = Array.isArray(users) ? users.length : (users.total || userData.length);
+
   return (
     <AuthenticatedLayout
       user={auth.user}
@@ -45,6 +49,13 @@ export default function Index({ auth, users, success }) {
             <div className="w-[120px]"></div> {/* Spacer untuk balance */}
           </div>
           
+          {/* Info total data */}
+          {userData.length > 0 && (
+            <div className="mb-4 text-sm text-gray-600">
+              Total: {totalUsers} pegawai
+            </div>
+          )}
+          
           {/* Container dengan background putih dan shadow */}
           <div className="bg-white rounded-lg shadow-sm overflow-hidden">
             
@@ -63,8 +74,8 @@ export default function Index({ auth, users, success }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {users.data && users.data.length > 0 ? (
-                    users.data.map((user, index) => (
+                  {userData && userData.length > 0 ? (
+                    userData.map((user, index) => (
                       <tr
                         key={user.id}
                         className="border-b border-gray-200 hover:bg-gray-50"
@@ -98,32 +109,24 @@ export default function Index({ auth, users, success }) {
                       </tr>
                     ))
                   ) : (
-                    // Empty rows untuk menunjukkan struktur tabel
-                    Array.from({ length: 8 }, (_, index) => (
-                      <tr key={index} className="border-b border-gray-200">
-                        <td className="px-6 py-8 border-r border-gray-200"></td>
-                        <td className="px-6 py-8 border-r border-gray-200"></td>
-                        <td className="px-6 py-8 border-r border-gray-200"></td>
-                        <td className="px-6 py-8 border-r border-gray-200"></td>
-                        <td className="px-6 py-8 border-r border-gray-200"></td>
-                        <td className="px-6 py-8 border-r border-gray-200"></td>
-                        <td className="px-6 py-8">
-                          <div className="flex justify-center space-x-2">
-                            <button className="bg-yellow-500 text-white px-3 py-1 rounded text-sm font-medium">
-                              Edit
-                            </button>
-                            <button className="bg-red-500 text-white px-3 py-1 rounded text-sm font-medium">
-                              Hapus
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
+                    // Tampilkan pesan jika tidak ada data
+                    <tr>
+                      <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
+                        Tidak ada data pegawai
+                      </td>
+                    </tr>
                   )}
                 </tbody>
               </table>
             </div>
           </div>
+
+          {/* Informasi tambahan jika diperlukan */}
+          {userData.length > 50 && (
+            <div className="mt-4 text-center text-sm text-gray-500">
+              Menampilkan semua {userData.length} data pegawai
+            </div>
+          )}
         </div>
       </div>
     </AuthenticatedLayout>

@@ -99,30 +99,20 @@ export default function ApprovedIndex({ auth, proposals, success }) {
                                             </tr>
                                         ))
                                     ) : (
-                                        // Empty rows untuk menunjukkan struktur tabel
-                                        Array.from({ length: 5 }, (_, index) => (
-                                            <tr key={index} className="border-b border-gray-200">
-                                                <td className="px-6 py-8 border-r border-gray-200"></td>
-                                                <td className="px-6 py-8 border-r border-gray-200"></td>
-                                                <td className="px-6 py-8 border-r border-gray-200"></td>
-                                                <td className="px-6 py-8 border-r border-gray-200"></td>
-                                                <td className="px-6 py-8 border-r border-gray-200"></td>
-                                                <td className="px-6 py-8 border-r border-gray-200">
-                                                    <div className="flex justify-center">
-                                                        <button className="bg-blue-500 text-white px-3 py-1 rounded text-sm font-medium">
-                                                            Lihat Dokumen
-                                                        </button>
+                                        <tr>
+                                            <td colSpan="7" className="px-6 py-16 text-center">
+                                                <div className="flex flex-col items-center justify-center">
+                                                    <div className="text-gray-400 mb-2">
+                                                        <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                                        </svg>
                                                     </div>
-                                                </td>
-                                                <td className="px-6 py-8">
-                                                    <div className="flex justify-center">
-                                                        <button className="bg-indigo-500 text-white px-3 py-1 rounded text-sm font-medium">
-                                                            Buat Kegiatan
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))
+                                                    <p className="text-gray-500 text-lg font-medium">
+                                                        Belum ada proposal yang disetujui.
+                                                    </p>
+                                                </div>
+                                            </td>
+                                        </tr>
                                     )}
                                 </tbody>
                             </table>
@@ -130,7 +120,7 @@ export default function ApprovedIndex({ auth, proposals, success }) {
                     </div>
 
                     {/* Pagination */}
-                    {proposals.meta && proposals.meta.links && (
+                    {proposals.meta && proposals.meta.links && proposals.data && proposals.data.length > 0 && (
                         <div className="mt-6">
                             <Pagination links={proposals.meta.links} />
                         </div>

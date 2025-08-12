@@ -13,16 +13,61 @@ class UserController extends Controller
 {
     /**
      * Display a listing of the resource.
+     * 
+     * OPSI 1: Menampilkan SEMUA data tanpa pagination
      */
     public function index()
     {
-        // Ambil semua user, urutkan dari yang terbaru, dan paginasi
-        $users = User::query()->latest()->paginate(10);
+        // Ambil semua user, urutkan dari yang terbaru
+        $users = User::query()->latest()->get();
 
         // Kirim data ke halaman React 'User/Index'
         return Inertia::render('User/Index', [
             'users' => UserResource::collection($users),
         ]);
+    }
+
+    /**
+     * OPSI 2: Menampilkan semua data dengan format yang konsisten
+     */
+    public function indexAlternative()
+    {
+        // Ambil semua user, urutkan dari yang terbaru
+        $allUsers = User::query()->latest()->get();
+
+        // Format data agar konsisten dengan frontend
+        $users = [
+            'data' => UserResource::collection($allUsers),
+            'total' => $allUsers->count(),
+        ];
+
+        // Kirim data ke halaman React 'User/Index'
+        return Inertia::render('User/Index', [
+            'users' => $users,
+        ]);
+    }
+
+    /**
+     * OPSI 3: Menampilkan dengan pagination opsional (bisa diatur via parameter)
+     */
+    public function indexFlexible()
+    {
+        // Cek apakah ada parameter 'all' di URL
+        $showAll = request()->get('all', false);
+        
+        if ($showAll) {
+            // Tampilkan semua data
+            $users = User::query()->latest()->get();
+            return Inertia::render('User/Index', [
+                'users' => UserResource::collection($users),
+            ]);
+        } else {
+            // Tampilkan dengan pagination
+            $users = User::query()->latest()->paginate(10);
+            return Inertia::render('User/Index', [
+                'users' => UserResource::collection($users),
+            ]);
+        }
     }
 
     /**
