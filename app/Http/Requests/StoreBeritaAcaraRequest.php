@@ -23,7 +23,7 @@ class StoreBeritaAcaraRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'file_berita_acara' => 'required|file|mimes:pdf,doc,docx|max:2048',
+            'file_berita_acara' => 'required|file|mimes:pdf,doc,docx|max:10240',
             'detail_akhir_kegiatan' => 'required|string',
             'status_akhir' => ['required', Rule::in(['Selesai', 'Ditunda', 'Dibatalkan'])],
         ];

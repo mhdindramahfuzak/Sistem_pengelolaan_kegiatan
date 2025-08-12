@@ -20,7 +20,7 @@ class UpdateKegiatanRequest extends FormRequest
             'tanggal_kegiatan' => 'required|date',
             'proposal_id' => 'nullable|exists:proposals,id',
             'tim_id' => 'required|exists:tims,id',
-            'sktl_path' => 'nullable|file|mimes:pdf,doc,docx|max:2048',
+            'sktl_path' => 'nullable|file|mimes:pdf,doc,docx|max:10240',
         ];
     }
 }

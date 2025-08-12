@@ -29,7 +29,7 @@ class StoreProposalRequest extends FormRequest
             'deskripsi' => ['required', 'string'],
             'tujuan' => ['required', 'string'],
             'tanggal_pengajuan' => ['required', 'date'],
-            'dokumen_path' => ['nullable', 'file', 'mimes:pdf,doc,docx', 'max:2048'],
+            'dokumen_path' => ['nullable', 'file', 'mimes:pdf,doc,docx', 'max:10240'],
         ];
     }
 }

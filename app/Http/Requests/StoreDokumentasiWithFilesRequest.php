@@ -28,7 +28,7 @@ class StoreDokumentasiWithFilesRequest extends FormRequest
             'kegiatan_id' => 'required|exists:kegiatans,id',
             'deskripsi' => 'nullable|string|max:1000',
             'fotos' => 'nullable|array',
-            'fotos.*' => 'image|mimes:jpeg,png,jpg,gif|max:5120', // 5MB per file
+            'fotos.*' => 'image|mimes:jpeg,png,jpg,gif|max:10240', // 5MB per file
         ];
     }
 

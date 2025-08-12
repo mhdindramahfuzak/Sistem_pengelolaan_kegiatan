@@ -94,25 +94,14 @@ export default function Index({ auth, tims, success }) {
                       </tr>
                     ))
                   ) : (
-                    // Empty state dengan baris kosong untuk konsistensi visual
-                    Array.from({ length: 8 }, (_, index) => (
-                      <tr key={index} className="border-b border-gray-200">
-                        <td className="px-6 py-8 border-r border-gray-200"></td>
-                        <td className="px-6 py-8 border-r border-gray-200"></td>
-                        <td className="px-6 py-8 border-r border-gray-200"></td>
-                        <td className="px-6 py-8 border-r border-gray-200"></td>
-                        <td className="px-6 py-8">
-                          <div className="flex justify-center space-x-2">
-                            <button className="bg-yellow-500 text-white px-3 py-1 rounded text-sm font-medium">
-                              Edit
-                            </button>
-                            <button className="bg-red-500 text-white px-3 py-1 rounded text-sm font-medium">
-                              Hapus
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
+                    // --- PERUBAHAN DI SINI ---
+                    // Tampilkan pesan jika tidak ada data, alih-alih baris kosong.
+                    <tr>
+                      <td colSpan="5" className="px-6 py-10 text-center text-gray-500">
+                        Belum ada data tim.
+                      </td>
+                    </tr>
+                    // --- AKHIR PERUBAHAN ---
                   )}
                 </tbody>
               </table>

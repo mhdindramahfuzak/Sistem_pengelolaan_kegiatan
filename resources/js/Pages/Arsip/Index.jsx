@@ -104,23 +104,11 @@ export default function Index({ auth, kegiatans, queryParams = {} }) {
                                             </tr>
                                         ))
                                     ) : (
-                                        // Empty rows untuk menunjukkan struktur tabel
-                                        Array.from({ length: 8 }, (_, index) => (
-                                            <tr key={index} className="border-b border-gray-200">
-                                                <td className="px-6 py-8 border-r border-gray-200"></td>
-                                                <td className="px-6 py-8 border-r border-gray-200"></td>
-                                                <td className="px-6 py-8 border-r border-gray-200"></td>
-                                                <td className="px-6 py-8 border-r border-gray-200"></td>
-                                                <td className="px-6 py-8 border-r border-gray-200"></td>
-                                                <td className="px-6 py-8">
-                                                    <div className="flex justify-center">
-                                                        <button className="bg-blue-500 text-white px-3 py-1 rounded text-sm font-medium">
-                                                            Detail
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))
+                                        <tr>
+                                            <td colSpan="6" className="px-6 py-10 text-center text-gray-500">
+                                                Belum ada data kegiatan yang diarsipkan.
+                                            </td>
+                                        </tr>
                                     )}
                                 </tbody>
                             </table>
@@ -128,7 +116,7 @@ export default function Index({ auth, kegiatans, queryParams = {} }) {
                     </div>
 
                     {/* Pagination */}
-                    {kegiatans.meta && kegiatans.meta.links && (
+                    {kegiatans.meta && kegiatans.meta.links && kegiatans.data.length > 0 && (
                         <div className="mt-6">
                             <Pagination links={kegiatans.meta.links} />
                         </div>
@@ -138,3 +126,4 @@ export default function Index({ auth, kegiatans, queryParams = {} }) {
         </AuthenticatedLayout>
     );
 }
+    
