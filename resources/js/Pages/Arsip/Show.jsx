@@ -1,5 +1,5 @@
 // File: resources/js/Pages/Arsip/Show.jsx
-// Enhanced mobile-friendly design with interactive features
+// Enhanced mobile-friendly design with interactive features and download functionality
 
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
@@ -75,10 +75,10 @@ const CollapsibleSection = ({ title, icon: Icon, children, defaultOpen = true })
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full px-6 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 transition-all duration-200 flex items-center justify-between text-left"
+                className="w-full px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 transition-all duration-200 flex items-center justify-between text-left"
             >
                 <div className="flex items-center space-x-3">
-                    {Icon && <Icon className="w-6 h-6 text-blue-600" />}
+                    {Icon && <Icon className="w-6 h-6 text-gray-600" />}
                     <h3 className="text-lg font-semibold text-gray-800">{title}</h3>
                 </div>
                 <ChevronDownIcon className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
@@ -92,9 +92,28 @@ const CollapsibleSection = ({ title, icon: Icon, children, defaultOpen = true })
     );
 };
 
-// Photo gallery component
+// Enhanced Photo gallery component with download functionality
 const PhotoGallery = ({ photos, title }) => {
     const [selectedPhoto, setSelectedPhoto] = useState(null);
+
+    const handleDownload = async (foto, index) => {
+        try {
+            const response = await fetch(foto.file_path);
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            const filename = foto.original_name || `${title.replace(/\s+/g, '_')}_${index + 1}.jpg`;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Error downloading image:', error);
+            alert('Gagal mengunduh gambar. Silakan coba lagi.');
+        }
+    };
 
     if (!photos || photos.length === 0) {
         return (
@@ -113,22 +132,39 @@ const PhotoGallery = ({ photos, title }) => {
             </h5>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                 {photos.map((foto, index) => (
-                    <button
+                    <div
                         key={foto.id || index}
-                        onClick={() => setSelectedPhoto(foto)}
                         className="relative group overflow-hidden rounded-lg shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105"
                     >
-                        <img 
-                            src={foto.file_path} 
-                            alt={`${title} ${index + 1}`}
-                            className="w-full h-32 object-cover"
-                        />
-                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity duration-200" />
-                    </button>
+                        <button
+                            onClick={() => setSelectedPhoto(foto)}
+                            className="w-full h-full block"
+                        >
+                            <img 
+                                src={foto.file_path} 
+                                alt={`${title} ${index + 1}`}
+                                className="w-full h-32 object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity duration-200" />
+                        </button>
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDownload(foto, index);
+                                }}
+                                className="bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-700 rounded-full p-2 shadow-md transition-all duration-200 hover:scale-110"
+                                title="Download foto"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
                 ))}
             </div>
 
-            {/* Photo modal */}
             {selectedPhoto && (
                 <div className="fixed inset-0 z-50 bg-black bg-opacity-75 flex items-center justify-center p-4" onClick={() => setSelectedPhoto(null)}>
                     <div className="relative max-w-4xl max-h-full">
@@ -137,14 +173,30 @@ const PhotoGallery = ({ photos, title }) => {
                             alt="Foto detail"
                             className="max-w-full max-h-full object-contain rounded-lg"
                         />
-                        <button 
-                            onClick={() => setSelectedPhoto(null)}
-                            className="absolute top-4 right-4 text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-75 transition-opacity duration-200"
-                        >
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
+                        <div className="absolute top-4 right-4 flex space-x-2">
+                            <button 
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    const index = photos.findIndex(p => p.id === selectedPhoto.id);
+                                    handleDownload(selectedPhoto, index);
+                                }}
+                                className="text-white bg-black bg-opacity-50 hover:bg-opacity-75 rounded-full p-2 transition-opacity duration-200"
+                                title="Download foto"
+                            >
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            </button>
+                            <button 
+                                onClick={() => setSelectedPhoto(null)}
+                                className="text-white bg-black bg-opacity-50 hover:bg-opacity-75 rounded-full p-2 transition-opacity duration-200"
+                                title="Tutup"
+                            >
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
@@ -194,11 +246,12 @@ export default function Show({ auth, kegiatan }) {
     };
 
     const formatCurrency = (amount) => {
+        if (amount === null || amount === undefined) return "Rp 0";
         return new Intl.NumberFormat('id-ID', {
             style: 'currency',
             currency: 'IDR',
             minimumFractionDigits: 0
-        }).format(amount || 0);
+        }).format(amount);
     };
 
     return (
@@ -234,7 +287,6 @@ export default function Show({ auth, kegiatan }) {
 
             <div className="py-6 sm:py-12">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    {/* Back button */}
                     <Link 
                         href={route('arsip.index')} 
                         className="mb-6 inline-flex items-center space-x-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors duration-200"
@@ -245,7 +297,6 @@ export default function Show({ auth, kegiatan }) {
                         <span>Kembali ke Arsip</span>
                     </Link>
 
-                    {/* Main content */}
                     <div className="space-y-6">
                         {/* Informasi Umum */}
                         <CollapsibleSection title="Informasi Kegiatan" icon={CalendarIcon}>
@@ -260,13 +311,6 @@ export default function Show({ auth, kegiatan }) {
                                     label="Tanggal Kegiatan" 
                                     value={formatTanggal(data.tanggal_kegiatan)} 
                                 />
-                                <div className="lg:col-span-2">
-                                    <DetailRow 
-                                        label="Deskripsi Kegiatan" 
-                                        value={data.ket_kegiatan} 
-                                        emptyMessage="Deskripsi kegiatan belum tersedia" 
-                                    />
-                                </div>
                             </div>
                         </CollapsibleSection>
 
@@ -287,6 +331,43 @@ export default function Show({ auth, kegiatan }) {
                             </div>
                         </CollapsibleSection>
 
+                        {/* === BAGIAN BARU: Informasi Kontrak === */}
+                        {data.kontrak && (
+                            <CollapsibleSection title="Informasi Kontrak Pihak Ketiga" icon={DocumentIcon}>
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                    <DetailRow
+                                        icon={DocumentIcon}
+                                        label="Nama Pt Pihak Ketiga"
+                                        value={data.kontrak?.nomor_kontrak}
+                                    />
+                                    <DetailRow
+                                        icon={UsersIcon}
+                                        label="Nama Pihak Ketiga"
+                                        value={data.kontrak?.nama_pihak_ketiga}
+                                    />
+                                    <DetailRow
+                                        icon={CalendarIcon}
+                                        label="Tanggal Kontrak"
+                                        value={formatTanggal(data.kontrak?.tanggal_kontrak)}
+                                    />
+                                    <DetailRow
+                                        icon={DocumentIcon}
+                                        label="Nilai Kontrak"
+                                        value={formatCurrency(data.kontrak?.nilai_kontrak)}
+                                    />
+                                    <div className="lg:col-span-2">
+                                        <DetailRow
+                                            icon={DocumentIcon}
+                                            label="Dokumen Kontrak"
+                                            isFile={true}
+                                            fileUrl={data.kontrak?.file_url}
+                                        />
+                                    </div>
+                                </div>
+                            </CollapsibleSection>
+                        )}
+                        {/* === AKHIR BAGIAN BARU === */}
+
                         {/* Proposal */}
                         <CollapsibleSection title="Proposal Terkait" icon={DocumentIcon}>
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -301,10 +382,12 @@ export default function Show({ auth, kegiatan }) {
                                     value={data.proposal?.pengusul?.name} 
                                 />
                                 <div className="lg:col-span-2">
+                                    {/* PERBAIKAN: Mengganti Tujuan dengan Deskripsi Proposal */}
                                     <DetailRow 
                                         icon={DocumentIcon}
-                                        label="Tujuan" 
-                                        value={data.proposal?.tujuan} 
+                                        label="Deskripsi Proposal" 
+                                        value={data.proposal?.deskripsi} 
+                                        emptyMessage="Deskripsi dari proposal tidak tersedia."
                                     />
                                 </div>
                                 <DetailRow 
@@ -333,7 +416,6 @@ export default function Show({ auth, kegiatan }) {
                                     />
                                 </div>
 
-                                {/* Data Kebutuhan */}
                                 {dokObservasi?.kebutuhans?.length > 0 && (
                                     <div className="bg-blue-50 rounded-lg p-4">
                                         <h5 className="font-semibold text-gray-800 mb-4">Data Kebutuhan</h5>
@@ -354,7 +436,6 @@ export default function Show({ auth, kegiatan }) {
                                     </div>
                                 )}
 
-                                {/* Foto Observasi */}
                                 <PhotoGallery photos={dokObservasi?.fotos} title="Foto Observasi" />
                             </div>
                         </CollapsibleSection>
@@ -374,15 +455,8 @@ export default function Show({ auth, kegiatan }) {
                                         isFile={true} 
                                         fileUrl={data.sktl_penyerahan_url} 
                                     />
-                                    <DetailRow 
-                                        icon={DocumentIcon}
-                                        label="Kontrak Pihak Ketiga" 
-                                        isFile={true} 
-                                        fileUrl={data.kontrak?.file_url} 
-                                    />
                                 </div>
 
-                                {/* Foto Penyerahan */}
                                 <PhotoGallery photos={dokPenyerahan?.fotos} title="Foto Penyerahan" />
                             </div>
                         </CollapsibleSection>

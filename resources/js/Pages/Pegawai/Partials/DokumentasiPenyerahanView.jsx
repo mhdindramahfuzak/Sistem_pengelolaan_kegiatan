@@ -32,7 +32,8 @@ export default function DokumentasiPenyerahanView({ kegiatans }) {
         nomor_kontrak: '',
         tanggal_kontrak: '',
         nilai_kontrak: '',
-        nama_pihak_ketiga: '',
+        // --- PERBAIKAN 1: Mengatur nilai default ---
+        nama_pihak_ketiga: 'Pihak Ketiga', 
         dokumen_kontrak: null,
     });
 
@@ -323,7 +324,7 @@ export default function DokumentasiPenyerahanView({ kegiatans }) {
 
                     <div className="mt-6">
                         <label htmlFor="nomor_kontrak" className="block text-sm font-medium text-gray-700">
-                            Nomor Kontrak
+                            Nama Pt Kontrak pihak ke 3
                         </label>
                         <TextInput
                             id="nomor_kontrak"
@@ -368,20 +369,8 @@ export default function DokumentasiPenyerahanView({ kegiatans }) {
                         <InputError message={kontrakForm.errors.nilai_kontrak} className="mt-2" />
                     </div>
 
-                    <div className="mt-4">
-                        <label htmlFor="nama_pihak_ketiga" className="block text-sm font-medium text-gray-700">
-                            Pihak ketiga (Nama Pihak Ketiga)
-                        </label>
-                        <TextInput
-                            id="nama_pihak_ketiga"
-                            name="nama_pihak_ketiga"
-                            value={kontrakForm.data.nama_pihak_ketiga}
-                            className="mt-1 block w-full"
-                            onChange={(e) => kontrakForm.setData('nama_pihak_ketiga', e.target.value)}
-                            required
-                        />
-                        <InputError message={kontrakForm.errors.nama_pihak_ketiga} className="mt-2" />
-                    </div>
+                    {/* --- PERBAIKAN 2: Menghapus input field --- */}
+                    {/* Input field untuk nama pihak ketiga dihapus dari tampilan */}
 
                     <div className="mt-4">
                         <label htmlFor="dokumen_kontrak" className="block text-sm font-medium text-gray-700">

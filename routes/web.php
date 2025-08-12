@@ -89,6 +89,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/laporan-berita/create', [\App\Http\Controllers\LaporanBeritaController::class, 'create'])->name('laporan-berita.create');
         Route::post('/laporan-berita/download', [\App\Http\Controllers\LaporanBeritaController::class, 'download'])->name('laporan-berita.download');
     });
+    
 
     // --- Rute KHUSUS Admin ---
     Route::middleware(['role:admin'])->group(function() {

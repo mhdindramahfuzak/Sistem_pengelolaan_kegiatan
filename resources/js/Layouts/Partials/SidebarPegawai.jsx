@@ -127,6 +127,15 @@ export default function SidebarPegawai({ isCollapsed }) {
                 Download Berita Acara
             </SidebarNavLink>
 
+            {/* === MENU BARU UNTUK PEGAWAI === */}
+            <SidebarNavLink 
+                href={route('arsip.index')} 
+                active={route().current('arsip.*')}
+                isCollapsed={isCollapsed}
+            >
+                Arsip
+            </SidebarNavLink>
+
         </div>
     );
 }

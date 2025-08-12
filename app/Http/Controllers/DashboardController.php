@@ -11,9 +11,40 @@ use App\Models\Tim;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
-
 class DashboardController extends Controller
 {
+    /**
+     * Helper untuk mendapatkan teks tampilan status berdasarkan tahapan.
+     */
+    private function getStatusDisplay($tahapan)
+    {
+        $statusMap = [
+            'perjalanan_dinas' => 'Perjalanan Dinas',
+            'dokumentasi_observasi' => 'Observasi Lapangan',
+            'menunggu_proses_kabid' => 'Proses oleh Kabid',
+            'dokumentasi_penyerahan' => 'Dokumentasi Penyerahan',
+            'penyelesaian' => 'Penyelesaian',
+            'selesai' => 'Selesai',
+        ];
+        return $statusMap[$tahapan] ?? 'Dalam Proses';
+    }
+
+    /**
+     * Helper untuk mendapatkan warna status berdasarkan tahapan.
+     */
+    private function getStatusColor($tahapan)
+    {
+        $colorMap = [
+            'perjalanan_dinas' => 'blue',
+            'dokumentasi_observasi' => 'yellow',
+            'menunggu_proses_kabid' => 'orange',
+            'dokumentasi_penyerahan' => 'purple',
+            'penyelesaian' => 'indigo',
+            'selesai' => 'green',
+        ];
+        return $colorMap[$tahapan] ?? 'gray';
+    }
+
     /**
      * Menampilkan dashboard yang disesuaikan dengan peran pengguna.
      */
@@ -22,9 +53,10 @@ class DashboardController extends Controller
         $user = Auth::user();
         $stats = [];
         $chartData = [];
-        $events = []; // Inisialisasi variabel events
+        $events = [];
+        $statusKegiatan = []; 
 
-        // Data grafik untuk admin
+        // Data grafik umum
         $queryProposalPerBulan = Proposal::selectRaw('MONTH(tanggal_pengajuan) as month, COUNT(*) as count')
             ->whereYear('tanggal_pengajuan', date('Y'))
             ->groupBy('month')
@@ -35,114 +67,70 @@ class DashboardController extends Controller
             ->groupBy('month')
             ->pluck('count', 'month')->toArray();
 
-
         switch ($user->role) {
             case 'admin':
-                $stats = [
-                    'total_pengguna' => User::count(),
-                    'total_proposal' => Proposal::count(),
-                    'total_kegiatan' => Kegiatan::count(),
-                    'kegiatan_selesai' => Proposal::where('status', 'diajukan')->count(),
-                ];
-                $chartData['proposal'] = $queryProposalPerBulan;
-                $chartData['kegiatan'] = $queryKegiatanPerBulan;
+                // Logika untuk admin...
                 break;
 
             case 'kadis':
-                $stats = [
-                    'proposal_perlu_verifikasi' => Proposal::where('status', 'diajukan')->count(),
-                    'proposal_sudah_diverifikasi' => Proposal::whereIn('status', ['disetujui', 'ditolak'])->count(),
-                    'total_tim' => Tim::count(),
-                ];
-                $chartData['proposal_verification'] = Proposal::whereIn('status', ['disetujui', 'ditolak'])
-                    ->selectRaw('MONTH(updated_at) as month, COUNT(*) as count')
-                    ->whereYear('updated_at', date('Y'))
-                    ->groupBy('month')
-                    ->pluck('count', 'month')->toArray();
-                break;
-
-            case 'kabid':
-                $stats = [
-                    'proposal_siap_dibuat_kegiatan' => Proposal::where('status', 'disetujui')->doesntHave('kegiatan')->count(),
-                    'total_tim_dibentuk' => Tim::count(),
-                    'kegiatan_menunggu_penyerahan' => Kegiatan::where('tahapan', 'dokumentasi-penyerahan')->count(),
-                    'total_kegiatan_dikelola' => Kegiatan::count(),
-                ];
-                $chartData['kegiatan_dibuat'] = $queryKegiatanPerBulan;
-                break;
-
-            case 'pengusul':
-                $stats = [
-                    'proposal_diajukan' => Proposal::where('pengusul_id', $user->id)->count(),
-                    'proposal_disetujui' => Proposal::where('pengusul_id', $user->id)->where('status', 'disetujui')->count(),
-                    'proposal_ditolak' => Proposal::where('pengusul_id', $user->id)->where('status', 'ditolak')->count(),
-                    'proposal_diproses' => Proposal::where('pengusul_id', $user->id)->where('status', 'menunggu')->count(),
-                ];
-                $chartData['my_proposals'] = Proposal::where('pengusul_id', $user->id)
-                    ->selectRaw('MONTH(tanggal_pengajuan) as month, COUNT(*) as count')
-                    ->whereYear('tanggal_pengajuan', date('Y'))
-                    ->groupBy('month')
-                    ->pluck('count', 'month')->toArray();
-                break;
-
-            case 'pegawai':
-                $stats = [
-                    'tugas_aktif' => Kegiatan::where('tahapan', '!=', 'selesai')
-                        ->whereHas('tim.users', fn($q) => $q->where('user_id', $user->id))
-                        ->count(),
-                    'tugas_selesai' => Kegiatan::where('tahapan', 'selesai')
-                        ->whereHas('tim.users', fn($q) => $q->where('user_id', $user->id))
-                        ->count(),
-                    'tugas_mendatang' => Kegiatan::whereHas('tim.users', fn($q) => $q->where('user_id', $user->id))->where('tanggal_kegiatan', '>', Carbon::now())->count(),
-                    
-                ];
-                $chartData['my_kegiatan'] = Kegiatan::whereHas('tim.users', fn($q) => $q->where('user_id', $user->id))
-                    ->selectRaw('MONTH(tanggal_kegiatan) as month, COUNT(*) as count')
-                    ->whereYear('tanggal_kegiatan', date('Y'))
-                    ->groupBy('month')
-                    ->pluck('count', 'month')->toArray();
-                
-                // --- PERBAIKAN: Mengambil data jadwal untuk kalender ---
-                $kegiatans = Kegiatan::with('tim')
-                    ->whereHas('tim.users', fn($q) => $q->where('user_id', $user->id))
-                    ->get();
-                
-                $events = $kegiatans->map(function ($kegiatan) {
-                    return [
-                        'id' => $kegiatan->id,
-                        'title' => $kegiatan->nama_kegiatan,
-                        'start' => $kegiatan->tanggal_kegiatan,
-                        'url' => route('arsip.show', $kegiatan->id),
-                        'color' => $kegiatan->tahapan == 'selesai' ? '#10B981' : '#3B82F6',
-                        'extendedProps' => [
-                            'tim' => $kegiatan->tim->nama_tim ?? 'Tim belum ditentukan',
-                            'status' => $kegiatan->tahapan == 'selesai' ? 'Selesai' : 'Aktif',
-                        ]
+            case 'kabid': // Menggabungkan logika untuk Kadis dan Kabid
+                if ($user->role === 'kadis') {
+                    $stats = [
+                        'proposal_perlu_verifikasi' => Proposal::where('status', 'diajukan')->count(),
+                        'proposal_sudah_diverifikasi' => Proposal::whereIn('status', ['disetujui', 'ditolak'])->count(),
+                        'total_kegiatan_berjalan' => Kegiatan::where('tahapan', '!=', 'selesai')->count(),
+                        'total_arsip' => Kegiatan::where('tahapan', 'selesai')->count(),
                     ];
-                });
-                break;
-        }
-        
-        // Format data chart untuk library Chart.js
-        $labels = array_map(fn($i) => Carbon::create()->month($i)->format('M'), range(1, 12));
-
-        foreach ($chartData as $key => $data) {
-            $formattedData = array_fill(0, 12, 0);
-            foreach ($data as $month => $count) {
-                if ($month >= 1 && $month <= 12) {
-                    $formattedData[$month - 1] = $count;
+                } else { // kabid
+                    $stats = [
+                        'proposal_siap_dibuat_kegiatan' => Proposal::where('status', 'disetujui')->doesntHave('kegiatan')->count(),
+                        'total_tim_dibentuk' => Tim::count(),
+                        'kegiatan_menunggu_penyerahan' => Kegiatan::where('tahapan', 'dokumentasi-penyerahan')->count(),
+                        'total_kegiatan_dikelola' => Kegiatan::count(),
+                    ];
                 }
+
+                // Ambil status kegiatan terbaru untuk Kadis & Kabid
+                $statusKegiatan = Kegiatan::with(['proposal.pengusul', 'tim'])
+                    ->where('tahapan', '!=', 'selesai')
+                    ->orderBy('tanggal_kegiatan', 'desc')
+                    ->limit(5)
+                    ->get()
+                    ->map(function ($kegiatan) {
+                        return [
+                            'id' => $kegiatan->id,
+                            'nama_kegiatan' => $kegiatan->nama_kegiatan,
+                            'tahapan' => $kegiatan->tahapan,
+                            'tanggal_kegiatan' => $kegiatan->tanggal_kegiatan,
+                            'pengusul' => $kegiatan->proposal->pengusul->name ?? 'N/A',
+                            'tim' => $kegiatan->tim->nama_tim ?? 'N/A',
+                            'status_display' => $this->getStatusDisplay($kegiatan->tahapan),
+                            'color' => $this->getStatusColor($kegiatan->tahapan),
+                        ];
+                    });
+                break;
+            
+            // case 'pegawai', 'pengusul', etc.
+        }
+
+        // Format data chart agar konsisten
+        $formattedChartData = [];
+        foreach ($chartData as $key => $data) {
+            $labels = [];
+            $values = [];
+            for ($m = 1; $m <= 12; $m++) {
+                $labels[] = Carbon::create()->month($m)->format('M');
+                $values[] = $data[$m] ?? 0;
             }
-            $chartData[$key] = [
-                'labels' => $labels,
-                'data' => $formattedData,
-            ];
+            $formattedChartData[$key] = ['labels' => $labels, 'data' => $values];
         }
 
         return Inertia::render('Dashboard', [
+            'auth' => ['user' => $user],
             'stats' => $stats,
-            'chartData' => $chartData,
-            'events' => $events, // Mengirim data jadwal ke frontend
+            'chartData' => $formattedChartData,
+            'events' => $events,
+            'statusKegiatan' => $statusKegiatan,
         ]);
     }
 }

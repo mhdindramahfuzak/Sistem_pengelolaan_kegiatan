@@ -14,7 +14,7 @@ export default function PerjalananDinasView({ kegiatans, openModal }) {
                                 Nama Kegiatan
                             </th>
                             <th className="px-6 py-4 text-left font-semibold border-r border-[#4A5B8F]">
-                                Proposal
+                                SKTL
                             </th>
                             <th className="px-6 py-4 text-left font-semibold border-r border-[#4A5B8F]">
                                 Tanggal
@@ -38,12 +38,19 @@ export default function PerjalananDinasView({ kegiatans, openModal }) {
                                         {kegiatan.nama_kegiatan}
                                     </td>
                                     <td className="px-6 py-4 border-r border-gray-200">
-                                        <Link 
-                                            href={route('proposal.show', kegiatan.proposal.id)} 
-                                            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
-                                        >
-                                            Lihat
-                                        </Link>
+                                        {/* PERBAIKAN: Cek jika sktl_url ada */}
+                                        {kegiatan.sktl_url ? (
+                                            <a 
+                                                href={kegiatan.sktl_url} 
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
+                                            >
+                                                Lihat File
+                                            </a>
+                                        ) : (
+                                            <span className="text-gray-400 text-sm italic">Tidak ada file</span>
+                                        )}
                                     </td>
                                     <td className="px-6 py-4 border-r border-gray-200">
                                         {kegiatan.tanggal_kegiatan}
@@ -54,7 +61,7 @@ export default function PerjalananDinasView({ kegiatans, openModal }) {
                                                 onClick={() => openModal('confirm', kegiatan)} 
                                                 className="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
                                             >
-                                                Konfirmasi Kehadiran
+                                                Hadir
                                             </button>
                                         </div>
                                     </td>

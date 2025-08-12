@@ -39,7 +39,7 @@ class AuthenticatedSessionController extends Controller
 
         // Cek jika pengguna memiliki peran 'admin'
         if ($user->hasRole('admin')) {
-            return redirect()->intended(route('kegiatan.index'));
+            return redirect()->intended('/user');
         }
 
         // Cek jika pengguna memiliki peran 'pengusul'

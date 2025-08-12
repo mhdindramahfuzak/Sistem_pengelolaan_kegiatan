@@ -108,28 +108,6 @@ export default function ReviewIndex({ auth, proposals }) {
                                             </td>
                                         </tr>
                                     )}
-                                    
-                                    {/* Empty rows untuk konsistensi visual jika data sedikit */}
-                                    {proposals.data.length > 0 && proposals.data.length < 8 && 
-                                        Array.from({ length: 8 - proposals.data.length }, (_, index) => (
-                                            <tr key={`empty-${index}`} className="border-b border-gray-200">
-                                                <td className="px-6 py-8 border-r border-gray-200"></td>
-                                                <td className="px-6 py-8 border-r border-gray-200"></td>
-                                                <td className="px-6 py-8 border-r border-gray-200"></td>
-                                                <td className="px-6 py-8 border-r border-gray-200"></td>
-                                                <td className="px-6 py-8">
-                                                    <div className="flex justify-center space-x-2">
-                                                        <button className="bg-emerald-500 text-white px-3 py-1 rounded text-sm font-medium">
-                                                            Setujui
-                                                        </button>
-                                                        <button className="bg-red-500 text-white px-3 py-1 rounded text-sm font-medium">
-                                                            Tolak
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))
-                                    }
                                 </tbody>
                             </table>
                         </div>
