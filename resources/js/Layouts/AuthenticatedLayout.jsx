@@ -93,6 +93,9 @@ export default function AuthenticatedLayout({ header, children }) { // Prop 'use
                     <SidebarNavLink href={route('kabid.proposal.index')} active={route().current('kabid.proposal.*')} isCollapsed={isSidebarCollapsed} iconPath="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
                         Proposal Disetujui
                     </SidebarNavLink>
+                    <SidebarNavLink href={route('arsip.index')} active={route().current('arsip.*')} isCollapsed={isSidebarCollapsed} iconPath="M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-2m-4-1v8m0 0l3-3m-3 3L9 8m-5 5h12">
+                        Arsip
+                    </SidebarNavLink>
                 </div>
             );
         }

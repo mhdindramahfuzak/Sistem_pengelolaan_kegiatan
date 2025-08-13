@@ -337,10 +337,10 @@ export default function Landing() {
 
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
                             {[
-                                { number: "150+", label: "Bantuan Perahu", icon: "🚤" },
-                                { number: "2,500+", label: "Nelayan Terlayani", icon: "👥" },
-                                { number: "85%", label: "Tingkat Kepuasan", icon: "⭐" },
-                                { number: "50+", label: "Kegiatan Tahun Ini", icon: "📅" }
+                                { number: "6 Unit ", label: "Pengadaan Alat Tangkap Ikan", icon: "🚤" },
+                                { number: "79 lokasi", label: "Mengembangkan Kampung Nelayan", icon: "👥" },
+                                { number: "2.481.303", label: "Peningakatan  Pendapatan Pembudidaya Ikan", icon: "⭐" },
+                                { number: "66.706,65 Ton", label: "Ekspor   Hasil   Perikanan ", icon: "📅" }
                             ].map((stat, index) => (
                                 <div key={index} className="text-center group">
                                     <div className="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300">

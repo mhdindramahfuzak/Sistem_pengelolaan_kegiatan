@@ -28,7 +28,7 @@ class StoreKontrakRequest extends FormRequest
             'nomor_kontrak' => 'required|string|max:255',
             'tanggal_kontrak' => 'required|date',
             'nilai_kontrak' => 'nullable|numeric|min:0', // Nilai kontrak opsional
-            'dokumen_kontrak' => 'required|file|mimes:pdf,doc,docx|max:2048',
+            'dokumen_kontrak' => 'required|file|mimes:pdf,doc,docx|max:10240',
         ];
     }
 
@@ -49,7 +49,7 @@ class StoreKontrakRequest extends FormRequest
             'dokumen_kontrak.required' => 'Dokumen kontrak wajib diunggah.',
             'dokumen_kontrak.file' => 'Dokumen kontrak harus berupa file.',
             'dokumen_kontrak.mimes' => 'Dokumen kontrak harus berformat PDF, DOC, atau DOCX.',
-            'dokumen_kontrak.max' => 'Ukuran dokumen kontrak maksimal 2MB.',
+            'dokumen_kontrak.max' => 'Ukuran dokumen kontrak maksimal butuh lebih kecil.',
         ];
     }
 

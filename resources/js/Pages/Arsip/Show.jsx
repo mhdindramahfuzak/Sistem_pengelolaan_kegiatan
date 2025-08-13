@@ -341,11 +341,6 @@ export default function Show({ auth, kegiatan }) {
                                         value={data.kontrak?.nomor_kontrak}
                                     />
                                     <DetailRow
-                                        icon={UsersIcon}
-                                        label="Nama Pihak Ketiga"
-                                        value={data.kontrak?.nama_pihak_ketiga}
-                                    />
-                                    <DetailRow
                                         icon={CalendarIcon}
                                         label="Tanggal Kontrak"
                                         value={formatTanggal(data.kontrak?.tanggal_kontrak)}
@@ -473,11 +468,6 @@ export default function Show({ auth, kegiatan }) {
                                         </dd>
                                     </div>
                                 </div>
-                                <DetailRow 
-                                    icon={CalendarIcon}
-                                    label="Tanggal Selesai" 
-                                    value={formatTanggal(data.updated_at)} 
-                                />
                                 <DetailRow 
                                     icon={DocumentIcon}
                                     label="File Berita Acara" 
