@@ -54,6 +54,7 @@ Route::middleware('auth')->group(function () {
     // --- Rute Bersama untuk Kadis, Kabid & Admin ---
     Route::middleware(['role:kadis|kabid|admin'])->group(function() {
         Route::get('/proposal-disetujui', [ProposalController::class, 'approvedIndex'])->name('kabid.proposal.index');
+        Route::get('/proposal/{proposal}', [ProposalController::class, 'show'])->name('proposal.show');
     });
 
     // --- Rute untuk Role: Kadis ---
@@ -68,6 +69,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('kegiatan', KegiatanController::class);
         Route::get('/manajemen-penyerahan', [ManajemenPenyerahanController::class, 'index'])->name('manajemen.penyerahan.index');
         Route::patch('/manajemen-penyerahan/{kegiatan}', [ManajemenPenyerahanController::class, 'update'])->name('manajemen.penyerahan.update');
+        
     });
     
     // --- Rute KHUSUS untuk Role: Pegawai ---
