@@ -42,10 +42,15 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
+        // Memberikan role 'pegawai' menggunakan Spatie
+        $user->assignRole('pegawai');
+
         event(new Registered($user));
 
+        // Pengguna akan langsung login setelah registrasi
         Auth::login($user);
 
+        // Arahkan ke dashboard setelah login
         return redirect(route('dashboard', absolute: false));
     }
 }

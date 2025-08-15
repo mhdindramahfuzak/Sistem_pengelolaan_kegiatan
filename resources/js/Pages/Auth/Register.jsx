@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
+import Swal from 'sweetalert2';
+import 'sweetalert2/dist/sweetalert2.min.css';
 
 // Import file CSS khusus untuk halaman registrasi
 import '../../../css/register.css';
@@ -27,7 +29,20 @@ export default function Register() {
 
     const submit = (e) => {
         e.preventDefault();
-        post(route('register'));
+        // Menggunakan callback onSuccess dari Inertia
+        post(route('register'), {
+            onSuccess: () => {
+                reset(); // Membersihkan form setelah berhasil
+                Swal.fire({
+                    title: 'Berhasil!',
+                    text: 'Akun berhasil dibuat.',
+                    icon: 'success',
+                    confirmButtonText: 'OK'
+                });
+                // Inertia akan secara otomatis mengarahkan ke halaman login
+                // setelah callback ini selesai, sesuai dengan respons dari controller.
+            },
+        });
     };
 
     return (
@@ -39,13 +54,13 @@ export default function Register() {
                 
                 {/* Tombol Kembali */}
                 <div className="w-full max-w-md mb-8 self-start lg:self-center lg:relative lg:-top-8 lg:left-[-2rem]">
-                     <Link 
-                        href={route('login')} 
-                        className="back-button"
-                        aria-label="Kembali ke halaman login"
-                    >
-                        <BackArrowIcon />
-                    </Link>
+                        <Link 
+                            href={route('login')} 
+                            className="back-button"
+                            aria-label="Kembali ke halaman login"
+                        >
+                            <BackArrowIcon />
+                        </Link>
                 </div>
 
                 <div className="w-full max-w-md text-center">
@@ -67,6 +82,7 @@ export default function Register() {
                                 onChange={(e) => setData('name', e.target.value)}
                                 placeholder="Masukkan Nama pegawai"
                                 className="form-input"
+                                required
                             />
                             {errors.name && <p className="error-message">{errors.name}</p>}
                         </div>
@@ -84,6 +100,7 @@ export default function Register() {
                                 onChange={(e) => setData('email', e.target.value)}
                                 placeholder="Masukkan email pegawai"
                                 className="form-input"
+                                required
                             />
                             {errors.email && <p className="error-message">{errors.email}</p>}
                         </div>
@@ -101,6 +118,7 @@ export default function Register() {
                                 onChange={(e) => setData('password', e.target.value)}
                                 placeholder="password"
                                 className="form-input"
+                                required
                             />
                             {errors.password && <p className="error-message">{errors.password}</p>}
                         </div>
@@ -118,6 +136,7 @@ export default function Register() {
                                 onChange={(e) => setData('password_confirmation', e.target.value)}
                                 placeholder="masukkan password pegawai"
                                 className="form-input"
+                                required
                             />
                             {errors.password_confirmation && <p className="error-message">{errors.password_confirmation}</p>}
                         </div>

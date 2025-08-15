@@ -13,9 +13,6 @@ export default function MenungguProsesKabidView({ kegiatans }) {
                             <th className="px-6 py-4 text-left font-semibold border-r border-[#4A5B8F]">
                                 Status Proses
                             </th>
-                            <th className="px-6 py-4 text-center font-semibold">
-                                Aksi
-                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -32,16 +29,6 @@ export default function MenungguProsesKabidView({ kegiatans }) {
                                         <span className="px-3 py-1 text-sm font-medium text-blue-700 bg-blue-100 rounded-full">
                                             Sedang Diproses oleh Kabid
                                         </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-center">
-                                        <div className="flex justify-center">
-                                            <Link 
-                                                href={route('arsip.show', kegiatan.id)} 
-                                                className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
-                                            >
-                                                Lihat Detail
-                                            </Link>
-                                        </div>
                                     </td>
                                 </tr>
                             ))

@@ -298,7 +298,7 @@ const FormRow = ({ kegiatan, index }) => {
                         </span>
                     ) : (
                         <span className="px-3 py-1 text-sm font-medium text-orange-700 bg-orange-100 rounded-full">
-                            Belum Diisi
+                            Sedang Dokumentasi Observasi
                         </span>
                     )}
                 </td>

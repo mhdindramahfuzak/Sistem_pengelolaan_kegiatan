@@ -131,7 +131,7 @@ export default function DokumentasiPenyerahanView({ kegiatans }) {
                                     Tanggal
                                 </th>
                                 <th className="px-6 py-4 text-left font-semibold border-r border-[#4A5B8F]">
-                                    Status Penyerahan
+                                    Status 
                                 </th>
                                 <th className="px-6 py-4 text-left font-semibold border-r border-[#4A5B8F]">
                                     Dokumen Kontrak
@@ -160,7 +160,7 @@ export default function DokumentasiPenyerahanView({ kegiatans }) {
                                                     </span>
                                                 ) : (
                                                     <span className="px-3 py-1 text-sm font-medium text-orange-700 bg-orange-100 rounded-full">
-                                                        Belum Diisi
+                                                        Melakukan Penyerahan
                                                     </span>
                                                 )}
                                             </td>

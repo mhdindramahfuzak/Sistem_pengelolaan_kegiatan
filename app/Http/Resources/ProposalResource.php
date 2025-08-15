@@ -22,9 +22,9 @@ class ProposalResource extends JsonResource
             'tujuan' => $this->tujuan,
             'dokumen_path' => $this->dokumen_path,
             'status' => $this->status,
-            'tanggal_pengajuan' => (new \DateTime($this->tanggal_pengajuan))->format('d-m-Y'),
+            'tanggal_pengajuan' => (new \DateTime($this->tanggal_pengajuan))->format('Y-m-d'),
             'alasan_penolakan' => $this->alasan_penolakan,
-            'created_at' => (new \DateTime($this->created_at))->format('d-m-Y H:i:s'),
+            'created_at' => (new \DateTime($this->created_at))->format('Y-m-d H:i:s'),
             'pengusul' => $this->whenLoaded('pengusul', function () {
                 return new UserResource($this->pengusul);
             }),
